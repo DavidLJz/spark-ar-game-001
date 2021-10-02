@@ -4,17 +4,14 @@ const Reactive = require('Reactive');
 const Time = require('Time');
 const D = require('Diagnostics');
   
-D.log('started');
+D.log('script loaded');
 
 const cubicMap = (x) => {
-  //if (x >  0.65) return 1;
-  //if (x < -0.65) return -1;
-
   const A = 0.65;
   const C = 1/A - A*A;
 
   return C*x + x*x*x;
-}
+};
 
 (async function () {
 
@@ -30,13 +27,9 @@ const cubicMap = (x) => {
 
   faceTurning.monitor().subscribeWithSnapshot(
     { val : faceTurning }, 
-    (event, snapshot) => { 
-      //turnRadius = snapshot.val;
-
+    (event, snapshot) => {
       turnRadius = cubicMap(snapshot.val);
       spriteHorizontalPosition = 275 * (1 + turnRadius) / 2;
-
-      //spriteHorizontalPosition = ((turnRadius * -1) + 1) * 137.5;
     
       playerSprite.transform.x = spriteHorizontalPosition;
     } 
