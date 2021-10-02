@@ -1,0 +1,6 @@
+*.arproj
+*.arprojbk
+*.arblock
+*.sublime*
+desktop.ini
+.DB_store
