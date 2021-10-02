@@ -6,6 +6,8 @@ const D = require('Diagnostics');
   
 D.log('script loaded');
 
+const debug = false;
+
 const cubicMap = (x) => {
   const A = 0.65;
   const C = 1/A - A*A;
@@ -35,9 +37,11 @@ const cubicMap = (x) => {
     } 
   );
 
-  Time.setInterval(function () {
-    D.log(spriteHorizontalPosition);
-    D.log(turnRadius);
-  }, 250);
+  if ( debug ) {
+    Time.setInterval(function () {
+      D.log(spriteHorizontalPosition);
+      D.log(turnRadius);
+    }, 250);
+  }
 
 })();
