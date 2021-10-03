@@ -13,7 +13,11 @@ export const PlayerInterface = class {
 		return this.sprite.bounds;
 	}
 
-	unsuscribe(boundProperties) {
+	getSubscriptions() {
+		return this.subscriptions;
+	}
+
+	unsubscribeTo(boundProperties) {
 		if ( boundProperties && !Array.isArray(boundProperties) ) {
 			throw new Error('must be array');
 		}
@@ -23,7 +27,9 @@ export const PlayerInterface = class {
 		}
 
 		for ( const i in boundProperties ) {
-			this.subscriptions[i].unsubscribe();
+			const sub = this.subscriptions[i] || null;
+
+			if (sub) sub.unsubscribe();
 		}
 
 		return this;
