@@ -30,13 +30,15 @@ const cubicMap = (x) => {
   for (let i = 0; i < 3; i++) {
     const dynamicPlane = await Scene.create("PlanarImage", {
         "name": `enemy${i}`,
-        "width": 0.1,
-        "height": 0.1,
+        "width": 10000 * 20,
+        "height": 10000 * 20,
         "hidden": true,
         'material' : 'material1'
     });
 
     Enemies.push( new EnemyInterface(dynamicPlane) );
+
+    enemyCanvas.addChild(dynamicPlane);
   }
 
   const faceTurning = face.cameraTransform.rotationY;
