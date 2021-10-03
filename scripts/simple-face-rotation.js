@@ -1,3 +1,5 @@
+import { PlayerInterface } from './Interfaces.js'
+
 const FaceTracking = require('FaceTracking');
 const Scene = require('Scene');
 const Reactive = require('Reactive');
@@ -5,8 +7,6 @@ const Time = require('Time');
 const D = require('Diagnostics');
   
 D.log('script loaded');
-
-const debug = false;
 
 const cubicMap = (x) => {
   const A = 0.65;
@@ -22,6 +22,8 @@ const cubicMap = (x) => {
     Scene.root.findFirst('rectangle0')
   ]);
 
+  const Player = new PlayerInterface(playerSprite);
+
   let spriteHorizontalPosition = 0;
   let turnRadius = 0;
 
@@ -33,15 +35,10 @@ const cubicMap = (x) => {
       turnRadius = cubicMap(snapshot.val);
       spriteHorizontalPosition = 275 * (1 + turnRadius) / 2;
     
-      playerSprite.transform.x = spriteHorizontalPosition;
+      Player.moveHorizontally(spriteHorizontalPosition);
     } 
   );
 
-  if ( debug ) {
-    Time.setInterval(function () {
-      D.log(spriteHorizontalPosition);
-      D.log(turnRadius);
-    }, 250);
-  }
+
 
 })();
