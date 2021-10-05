@@ -11,6 +11,10 @@ const PlayerInterface = class {
 		this.active = false;
 	}
 
+	getBounds2d() {
+		return this.sprite.bounds;
+	}
+
 	isActive() {
 		return this.active;
 	}
@@ -140,77 +144,20 @@ const cubicMap = (x) => {
 };
 
 const CollisionDetector = {
+	checkCollision : function (positionA, positionB, lengthA, lengthB) {
+    return Reactive.abs(
+    	positionA.sub(positionB)
+    ).le(
+    	Reactive.add(lengthA.div(2), lengthB.div(2))
+    );
+	},
 
-  getCollisionArea : function (obj) {
-    const bounds = obj.getBounds2d();
-
-    return {
-      'x': { 'min' : bounds.x.pin(), 'max' : bounds.x.add( bounds.width.pin() ) },
-      'y': { 'min' : bounds.y.pin(), 'max' : bounds.y.pin( bounds.height.pin() ) },
-    };
-  },
-
-  getCollisions : function (objArray) {
-    if ( !objArray || !Array.isArray(objArray) ) {
-      throw new Error('must pass an array');
-    }
-
-    if ( objArray.length < 2 ) {
-      throw new Error('need more objects to check');
-    }
-
-    const collisionAreas = [];
-    const collisions = [];
-
-    for ( let i in objArray ) {
-      const colArea = this.getCollisionArea(objArray[i]);
-
-      collisionAreas.push(colArea);
-    }
-
-    for ( let k in collisionAreas ) {
-      const objA = collisionAreas[k];
-
-      for ( let i in collisionAreas ) {
-        if ( i === k ) continue;
-
-        const objB = collisionAreas[i];
-
-        let x = this.axisCollisions('x', objA, objB);
-        let y = this.axisCollisions('y', objA, objB);
-
-        const event1 = new EventSource({
-          subscribe : function () {
-            collisions.push([ k, i ])
-          }
-        });
-
-        const event2 = new EventSource;
-
-        x.and( y ).ifThenElse(event1, event2);
-
-        event1.unsubscribe();
-      }
-    }
-
-    return collisions;
-  },
-
-  axisCollisions : function (xy, objA, objB) {
-    if ( typeof xy !== 'string' || ['x','y'].indexOf(xy) == -1 ) {
-      throw new Error('invalid argument xy must be string x or y')
-    }
-
-    let axisCollisionA = objA[xy].min.ge( objB[xy].min ).and( 
-      objA[xy].min.le( objB[xy].max ) 
-    ).pin();
-
-    let axisCollisionB = objA[xy].max.ge( objB[xy].min ).and( 
-      objA[xy].max.le( objB[xy].max ) 
-    ).pin();
-
-    return axisCollisionA.and( axisCollisionB ).ifThenElse(true, false);
-  }
+	checkCollision2d : function (ObjectA, ObjectB) {
+		return Reactive.andList([
+			this.checkCollision(ObjectA.x, ObjectB.x, ObjectA.width, ObjectB.width),
+			this.checkCollision(ObjectA.y, ObjectB.y, ObjectA.height, ObjectB.height),
+		]);
+	}
 };
 
 export const GameState = class {
@@ -222,32 +169,14 @@ export const GameState = class {
 		this.enemyCanvas = enemyCanvas;
 
 	  this.faceTracking = null;
+	  this.collisionWatch = [];
+
 		this.state = 'idle'; // paused, over, started
 	}
 
 	start() {
-		(async () => {
-			this.state = 'started';
-
-			if ( !this.enemies.length ) {
-			  for (let i = 0; i < 3; i++) {
-			    const dynamicPlane = await Scene.create("PlanarImage", {
-			        "name": `enemy${i}`,
-			        "width": 10000 * 20,
-			        "height": 10000 * 20,
-			        "hidden": true,
-			        'material' : 'material1'
-			    });
-
-			    const enemy = new EnemyInterface(dynamicPlane);
-
-			    this.enemies.push(enemy);
-			    this.enemyCanvas.addChild(dynamicPlane);
-			  }
-			}
-
-			this.enableGameplay();
-		})();
+		this.state = 'started';
+		this.setEnemySpawner().enablePlayerMovement();
 
 		return this;
 	}
@@ -255,40 +184,89 @@ export const GameState = class {
 	end() {
 		this.player.unsubscribeTo();
 		this.faceTracking.unsubscribe();
+			
+		for ( const event in this.collisionWatch ) {
+			event.unsubscribe();
+		}
+
+		this.collisionWatch = [];
 
 		this.state = 'over';
 
 		return this;
 	}
 
-	enableGameplay() {
-		const faceTurning = this.face.cameraTransform.rotationY;
+	lose() {
+		Diagnostics.log('Game over');
 
-	  this.faceTracking = faceTurning.monitor().subscribeWithSnapshot(
-	    { faceTurning }, 
-	    (event, snapshot) => {
-	      let turnRadius = cubicMap(snapshot.faceTurning);
-	      let spriteHorizontalPosition = 275 * (1 + turnRadius) / 2;
-	  
-	      this.player.moveHorizontally(spriteHorizontalPosition);
-	    } 
-	  );
+		return this;
+	}
 
-	  let addToSnapshot = {};
+	setEnemySpawner() {
+		(async () => {
+			Time.setInterval(async () => {
+				if ( this.enemies.length >= 2 ) return;
 
-	  for ( let i in this.enemies ) {
-	  	addToSnapshot['enemy-'+ i +'-x'] = this.enemies[i].getBounds2d().x;
-	  	addToSnapshot['enemy-'+ i +'-y'] = this.enemies[i].getBounds2d().y;
-	  	addToSnapshot['enemy-'+ i +'-w'] = this.enemies[i].getBounds2d().width;
-	  	addToSnapshot['enemy-'+ i +'-h'] = this.enemies[i].getBounds2d().height;
-	  }
+				let rand = Math.floor(Math.random() * (99 - 1)) + 1;
 
-	  this.player.onChangeHorizontalPosition(function (snapshot) {
-	  	
-	  	Diagnostics.log(snapshot);
+				const enemySprite = await Scene.create("PlanarImage", {
+	        "name": `enemy-` + rand,
+	        "width": 10000 * 20,
+	        "height": 10000 * 20,
+	        "hidden": false,
+	        'material' : 'material1'
+	      });
 
-	  }, addToSnapshot);
+	      const enemy = new EnemyInterface(enemySprite);
 
-	  return this;
+	      this.enemies.push(enemy);
+	      this.enemyCanvas.addChild(enemySprite);
+
+				this.monitorCollision(enemy, () => { Diagnostics.log('collision detected') });
+
+	      enemy.activate();
+
+			}, 3000);
+
+			Diagnostics.log('enemies spawning');
+		})();
+
+		return this;
+	}
+
+	enablePlayerMovement() {
+		(async () => {
+			const faceTurning = this.face.cameraTransform.rotationY;		  
+
+			this.faceTracking = faceTurning.monitor().subscribeWithSnapshot(
+		    { faceTurning }, 
+		    (event, snapshot) => {
+		      let turnRadius = cubicMap(snapshot.faceTurning);
+		      let spriteHorizontalPosition = 275 * (1 + turnRadius) / 2;
+		  
+		      this.player.moveHorizontally(spriteHorizontalPosition);
+		    } 
+		  );
+
+		  Diagnostics.log('enabled player controls');
+		})();
+
+		return this;
+	}
+
+	monitorCollision(entity, onCollision) {
+		(async () => {
+			if ( typeof onCollision !== 'function' ) return;
+
+      const col = CollisionDetector.checkCollision2d(
+				entity.getBounds2d(), this.player.getBounds2d()
+			);
+
+			const collisionSignal = col.onOn().subscribe(onCollision);
+
+			this.collisionWatch.push(collisionSignal);
+		})();
+
+		return this;
 	}
 };
