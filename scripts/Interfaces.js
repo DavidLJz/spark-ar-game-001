@@ -222,7 +222,9 @@ export const GameState = class {
 	      this.enemies.push(enemy);
 	      this.enemyCanvas.addChild(enemySprite);
 
-				this.monitorCollision(enemy, () => { Diagnostics.log('collision detected') });
+				this.monitorCollision(enemy, this.player, () => {
+					Diagnostics.log('collision detected') 
+				});
 
 	      enemy.activate();
 
@@ -254,12 +256,12 @@ export const GameState = class {
 		return this;
 	}
 
-	monitorCollision(entity, onCollision) {
+	monitorCollision(entityA, entityB, onCollision) {
 		(async () => {
 			if ( typeof onCollision !== 'function' ) return;
 
       const col = CollisionDetector.checkCollision2d(
-				entity.getBounds2d(), this.player.getBounds2d()
+				entityA.getBounds2d(), entityB.getBounds2d()
 			);
 
 			const collisionSignal = col.onOn().subscribe(onCollision);
