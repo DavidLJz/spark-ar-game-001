@@ -1,19 +1,6 @@
-import { PlayerInterface, EnemyInterface } from './Interfaces.js'
+import { Diagnostics, Scene, FaceTracking, GameState } from './Interfaces.js'
 
-const FaceTracking = require('FaceTracking');
-const Scene = require('Scene');
-const Reactive = require('Reactive');
-const Time = require('Time');
-const D = require('Diagnostics');
-
-D.log('script loaded');
-
-const cubicMap = (x) => {
-  const A = 0.65;
-  const C = 1/A - A*A;
-
-  return C*x + x*x*x;
-};
+Diagnostics.log('script loaded');
 
 (async function () {
 
@@ -23,34 +10,8 @@ const cubicMap = (x) => {
     Scene.root.findFirst('canvas1'),
   ]);
 
-  const Player = new PlayerInterface(playerSprite);
+  const Game = new GameState(face, playerSprite, enemyCanvas);
 
-  const Enemies = [];
-
-  for (let i = 0; i < 3; i++) {
-    const dynamicPlane = await Scene.create("PlanarImage", {
-        "name": `enemy${i}`,
-        "width": 10000 * 20,
-        "height": 10000 * 20,
-        "hidden": true,
-        'material' : 'material1'
-    });
-
-    Enemies.push( new EnemyInterface(dynamicPlane) );
-
-    enemyCanvas.addChild(dynamicPlane);
-  }
-
-  const faceTurning = face.cameraTransform.rotationY;
-
-  faceTurning.monitor().subscribeWithSnapshot(
-    { val : faceTurning }, 
-    (event, snapshot) => {
-      let turnRadius = cubicMap(snapshot.val);
-      let spriteHorizontalPosition = 275 * (1 + turnRadius) / 2;
-  
-      Player.moveHorizontally(spriteHorizontalPosition);
-    } 
-  );
+  Game.start();
 
 })();
