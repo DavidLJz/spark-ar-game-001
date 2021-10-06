@@ -9,6 +9,8 @@ const PlayerInterface = class {
 		this.sprite = sprite;
 		this.subscriptions = {};
 		this.active = false;
+
+		this.sprite.transform.y = Reactive.val(400).add(this.sprite.bounds.height);
 	}
 
 	getBounds2d() {
@@ -84,8 +86,13 @@ const EnemyInterface = class {
 	}
 
 	activate() {
+		this.sprite.transform.y = Reactive.val(-20).sub(this.sprite.bounds.height);
+
 		this.sprite.hidden = false;
 		this.active = true;
+
+		this.beginMovement();
+
 		return this;
 	}
 
@@ -118,6 +125,12 @@ const EnemyInterface = class {
 		}
 
 		return this;
+	}
+
+	beginMovement() {
+		Time.setInterval(() => {
+			this.moveVertically(this.sprite.bounds.y.add(5));
+		}, 10);
 	}
 
 	onChangeVerticalPosition(callback) {
@@ -204,31 +217,31 @@ export const GameState = class {
 
 	setEnemySpawner() {
 		(async () => {
-			Time.setInterval(async () => {
-				if ( this.enemies.length >= 2 ) return;
+			
+			if ( this.enemies.length >= 2 ) return;
 
-				let rand = Math.floor(Math.random() * (99 - 1)) + 1;
+			let rand = Math.floor(Math.random() * (99 - 1)) + 1;
 
-				const enemySprite = await Scene.create("PlanarImage", {
-	        "name": `enemy-` + rand,
-	        "width": 10000 * 20,
-	        "height": 10000 * 20,
-	        "hidden": false,
-	        'material' : 'material1'
-	      });
+			const enemySprite = await Scene.create("PlanarImage", {
+        "name": `enemy-` + rand,
+        "width": 10000 * 20,
+        "height": 10000 * 20,
+        "hidden": false,
+        'material' : 'material1'
+      });
 
-	      const enemy = new EnemyInterface(enemySprite);
+      const enemy = new EnemyInterface(enemySprite);
 
-	      this.enemies.push(enemy);
-	      this.enemyCanvas.addChild(enemySprite);
+      this.enemies.push(enemy);
+      this.enemyCanvas.addChild(enemySprite);
 
-				this.monitorCollision(enemy, this.player, () => {
-					Diagnostics.log('collision detected') 
-				});
+			this.monitorCollision(enemy, this.player, () => {
+				Diagnostics.log('collision detected') 
+			});
 
-	      enemy.activate();
+      enemy.activate();
 
-			}, 3000);
+      // cuando llegue al final de la pantalla spawnear otro
 
 			Diagnostics.log('enemies spawning');
 		})();
