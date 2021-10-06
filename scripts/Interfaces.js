@@ -88,6 +88,10 @@ const EnemyInterface = class {
 
 	activate() {
 		this.sprite.transform.y = Reactive.val(-20).sub(this.sprite.bounds.height);
+		
+		let rand = Math.floor(Math.random() * (270 - 1)) + 1;
+
+		this.sprite.transform.x = Reactive.val(rand);
 
 		this.sprite.hidden = false;
 		this.active = true;
@@ -97,8 +101,10 @@ const EnemyInterface = class {
 		return this;
 	}
 
-	moveVertically(y) {
-		this.sprite.transform.y = y;
+	deactivate() {
+		this.sprite.hidden = true;
+		this.active = false;
+
 		return this;
 	}
 
@@ -130,7 +136,7 @@ const EnemyInterface = class {
 
 	beginMovement() {
 		const timeDriver = Animation.timeDriver({
-			durationMilliseconds: 6000,
+			durationMilliseconds: 3500,
 		});
 
 		const sampler = Animation.samplers.linear(-94, 700);
@@ -140,6 +146,13 @@ const EnemyInterface = class {
 		this.sprite.transform.y = animation;
 
 		timeDriver.start();
+
+		timeDriver.onCompleted().subscribe(() => {
+			this.deactivate();
+			this.activate();
+		});
+
+		return this;
 	}
 
 	onChangeVerticalPosition(callback) {
@@ -192,6 +205,7 @@ export const GameState = class {
 
 	  this.faceTracking = null;
 	  this.collisionWatch = [];
+	  this.enemyMovementWatch = [];
 
 		this.state = 'idle'; // paused, over, started
 	}
@@ -210,8 +224,13 @@ export const GameState = class {
 		for ( const event in this.collisionWatch ) {
 			event.unsubscribe();
 		}
+			
+		for ( const event in this.enemyMovementWatch ) {
+			event.unsubscribe();
+		}
 
 		this.collisionWatch = [];
+		this.enemyMovementWatch = [];
 
 		this.state = 'over';
 
@@ -226,36 +245,45 @@ export const GameState = class {
 
 	setEnemySpawner() {
 		(async () => {
-			
-			if ( this.enemies.length >= 2 ) return;
-
-			let rand = Math.floor(Math.random() * (99 - 1)) + 1;
-
-			const enemySprite = await Scene.create("PlanarImage", {
-        "name": `enemy-` + rand,
-        "width": 10000 * 20,
-        "height": 10000 * 20,
-        "hidden": false,
-        'material' : 'material1'
-      });
-
-      const enemy = new EnemyInterface(enemySprite);
-
-      this.enemies.push(enemy);
-      this.enemyCanvas.addChild(enemySprite);
-
-			this.monitorCollision(enemy, this.player, () => {
-				Diagnostics.log('collision detected') 
-			});
-
-      enemy.activate();
-
-      // cuando llegue al final de la pantalla spawnear otro
+			this.generateEnemy();
 
 			Diagnostics.log('enemies spawning');
 		})();
 
 		return this;
+	}
+
+	generateEnemy() {
+		(async () => {
+			if ( this.enemies.length >= 3 ) return;
+
+			let rand = Math.floor(Math.random() * (99 - 1)) + 1;
+
+			const enemySprite = await Scene.create("PlanarImage", {
+	      "name": `enemy-` + rand,
+	      "width": 10000 * 20,
+	      "height": 10000 * 20,
+	      "hidden": false,
+	      'material' : 'material1'
+	    });
+
+	    const enemy = new EnemyInterface(enemySprite);
+
+	    this.enemies.push(enemy);
+	    this.enemyCanvas.addChild(enemySprite);
+
+			this.monitorCollision(enemy, this.player, () => {
+				Diagnostics.log('collision detected') 
+			});
+
+			enemy.getBounds2d().y.ge(400).onOn().subscribe(() => {
+				this.generateEnemy();
+			});
+
+	    enemy.activate();
+		})();
+
+	  return this;
 	}
 
 	enablePlayerMovement() {
