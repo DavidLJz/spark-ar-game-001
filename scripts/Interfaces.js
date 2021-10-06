@@ -3,6 +3,7 @@ export const FaceTracking = require('FaceTracking');
 export const Scene = require('Scene');
 const Reactive = require('Reactive');
 const Time = require('Time');
+const Animation = require('Animation');
 
 const PlayerInterface = class {
 	constructor (sprite) {
@@ -128,9 +129,17 @@ const EnemyInterface = class {
 	}
 
 	beginMovement() {
-		Time.setInterval(() => {
-			this.moveVertically(this.sprite.bounds.y.add(5));
-		}, 10);
+		const timeDriver = Animation.timeDriver({
+			durationMilliseconds: 6000,
+		});
+
+		const sampler = Animation.samplers.linear(-94, 700);
+
+		const animation = Animation.animate(timeDriver, sampler);
+
+		this.sprite.transform.y = animation;
+
+		timeDriver.start();
 	}
 
 	onChangeVerticalPosition(callback) {
