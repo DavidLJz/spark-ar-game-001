@@ -368,21 +368,29 @@ export const GameState = class {
 	}
 
 	enablePlayerMovement() {
-		(async () => {
-			const faceTurning = this.face.cameraTransform.rotationY;		  
+		const faceTurning = this.face.cameraTransform.rotationY;		  
 
-			this.faceTracking = faceTurning.monitor().subscribeWithSnapshot(
-		    { faceTurning }, 
-		    (event, snapshot) => {
-		      let turnRadius = cubicMap(snapshot.faceTurning);
-		      let spriteHorizontalPosition = 275 * (1 + turnRadius) / 2;
-		  
-		      this.player.moveHorizontally(spriteHorizontalPosition);
-		    } 
-		  );
+		this.faceTracking = faceTurning.monitor().subscribeWithSnapshot(
+	    { faceTurning }, 
+	    (event, snapshot) => {
+	      let turnRadius = cubicMap(snapshot.faceTurning);
+	      let spriteHorizontalPosition = 275 * (1 + turnRadius) / 2;
+	  
+	      this.player.moveHorizontally(spriteHorizontalPosition);
+	    } 
+	  );
 
-		  Diagnostics.log('enabled player controls');
-		})();
+	  Diagnostics.log('enabled player controls');
+
+		return this;
+	}
+
+	disablePlayerMovement() {
+		if ( !this.faceTracking ) return;
+
+		this.faceTracking.unsubscribe();
+
+		Diagnostics.log('disabled player controls');
 
 		return this;
 	}
