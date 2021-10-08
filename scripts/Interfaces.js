@@ -97,6 +97,7 @@ const EnemyInterface = class {
 		this.sprite = sprite;
 		this.subscriptions = {};
 		this.active = false;
+		this.timeDriver = null;
 	}
 
 	isActive() {
@@ -113,6 +114,8 @@ const EnemyInterface = class {
 	restartMovement(x=null) {
 		this.sprite.hidden = true;
 
+		this.timeDriver = null;
+
 		this.sprite.transform.y = Reactive.val(-20).sub(this.sprite.bounds.height);
 		
 		if ( !x ) {
@@ -124,6 +127,26 @@ const EnemyInterface = class {
 		this.sprite.hidden = false;
 
 		this.beginMovement();
+
+		return this;
+	}
+
+	unfreeze() {
+		this.active = true;
+
+		if ( this.timeDriver ) {
+			this.timeDriver.start();
+		}
+
+		return this;
+	}
+
+	freeze() {
+		this.active = false;
+
+		if ( this.timeDriver && this.timeDriver.isRunning() ) {
+			this.timeDriver.stop();
+		}
 
 		return this;
 	}
@@ -164,19 +187,19 @@ const EnemyInterface = class {
 	}
 
 	beginMovement() {
-		const timeDriver = Animation.timeDriver({
+		this.timeDriver = Animation.timeDriver({
 			durationMilliseconds: 3500,
 		});
 
 		const sampler = Animation.samplers.linear(-94, 700);
 
-		const animation = Animation.animate(timeDriver, sampler);
+		const animation = Animation.animate(this.timeDriver, sampler);
 
 		this.sprite.transform.y = animation;
 
-		timeDriver.start();
+		this.timeDriver.start();
 
-		timeDriver.onCompleted().subscribe(() => {
+		this.timeDriver.onCompleted().subscribe(() => {
 			if ( this.active ) {
 				this.restartMovement();
 			}
