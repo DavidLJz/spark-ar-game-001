@@ -1,4 +1,4 @@
-import { Diagnostics, Scene, FaceTracking, GameState } from './Interfaces.js'
+import { TouchGestures, Diagnostics, Scene, FaceTracking, GameState } from './Interfaces.js'
 
 Diagnostics.log('script loaded');
 
@@ -14,5 +14,21 @@ Diagnostics.log('script loaded');
   const Game = new GameState(face, playerSprite, enemyCanvas, gameStateText);
 
   Game.start();
+
+  TouchGestures.onTap().subscribe(() => {
+    switch ( Game.state ) {
+      case 'started': {
+        Game.pause();
+        break;
+      }
+    
+      case 'paused': {
+        Game.resume();
+        break;
+      }
+
+      default: break;
+    }
+  });
 
 })();

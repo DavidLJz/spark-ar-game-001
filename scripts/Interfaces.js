@@ -1,6 +1,7 @@
 export const Diagnostics = require('Diagnostics');
 export const FaceTracking = require('FaceTracking');
 export const Scene = require('Scene');
+export const TouchGestures = require('TouchGestures');
 const Reactive = require('Reactive');
 const Time = require('Time');
 const Animation = require('Animation');
@@ -300,6 +301,39 @@ export const GameState = class {
 		Diagnostics.log('Game over');
 
 		this.end();
+
+		return this;
+	}
+
+	resume() {
+		this.state = 'started';
+		this.enablePlayerMovement();
+
+		this.gameStateText.hidden = true;
+
+		if ( this.enemies.length > 0 ) {
+			for ( const enemy of this.enemies ) {
+				if ( enemy.isActive() ) continue;
+				
+				enemy.unfreeze();
+			}
+		}
+	}
+
+	pause() {
+		this.state = 'paused';
+		this.disablePlayerMovement();
+
+		this.gameStateText.text = 'PAUSED';
+		this.gameStateText.hidden = false;
+
+		if ( this.enemies.length > 0 ) {
+			for ( const enemy of this.enemies ) {
+				if ( !enemy.isActive() ) continue;
+				
+				enemy.freeze();
+			}
+		}
 
 		return this;
 	}
