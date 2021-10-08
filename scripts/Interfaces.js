@@ -9,7 +9,8 @@ const PlayerInterface = class {
 	constructor (sprite) {
 		this.sprite = sprite;
 		this.subscriptions = {};
-		this.active = false;
+		this.lifes = 3;
+		this.onDeathCallback = null;
 
 		this.sprite.transform.y = Reactive.val(400).add(this.sprite.bounds.height);
 	}
@@ -18,8 +19,24 @@ const PlayerInterface = class {
 		return this.sprite.bounds;
 	}
 
-	isActive() {
-		return this.active;
+	damage() {
+		this.lifes--;
+
+		if ( this.lifes === 0 && this.onDeathCallback ) {
+			this.onDeathCallback();
+		}
+
+		return this;
+	}
+
+	onDeath(callback) {
+		if ( typeof callback !== 'function' ) {
+			throw new Error('must be a function');
+		}
+
+		this.onDeathCallback = callback;
+
+		return this;
 	}
 
 	moveHorizontally(x) {
@@ -86,15 +103,25 @@ const EnemyInterface = class {
 		return this.active;
 	}
 
-	activate() {
+	activate(x=null) {
+		this.active = true;
+		this.restartMovement(x);
+
+		return this;
+	}
+
+	restartMovement(x=null) {
+		this.sprite.hidden = true;
+
 		this.sprite.transform.y = Reactive.val(-20).sub(this.sprite.bounds.height);
 		
-		let rand = Math.floor(Math.random() * (270 - 1)) + 1;
+		if ( !x ) {
+			x = Math.floor(Math.random() * (270 - 1)) + 1;
+		}
 
-		this.sprite.transform.x = Reactive.val(rand);
+		this.sprite.transform.x = Reactive.val(x);
 
 		this.sprite.hidden = false;
-		this.active = true;
 
 		this.beginMovement();
 
@@ -102,8 +129,10 @@ const EnemyInterface = class {
 	}
 
 	deactivate() {
-		this.sprite.hidden = true;
 		this.active = false;
+		this.sprite.hidden = true;
+
+		this.sprite.transform.y = Reactive.val(-20).sub(this.sprite.bounds.height);
 
 		return this;
 	}
@@ -148,8 +177,9 @@ const EnemyInterface = class {
 		timeDriver.start();
 
 		timeDriver.onCompleted().subscribe(() => {
-			this.deactivate();
-			this.activate();
+			if ( this.active ) {
+				this.restartMovement();
+			}
 		});
 
 		return this;
@@ -212,20 +242,23 @@ export const GameState = class {
 
 	start() {
 		this.state = 'started';
-		this.setEnemySpawner().enablePlayerMovement();
+		this.setEnemySpawner().enablePlayerMovement().monitorPlayerLife();
 
 		return this;
 	}
 
 	end() {
-		this.player.unsubscribeTo();
 		this.faceTracking.unsubscribe();
+
+		for ( const enemy of this.enemies ) {
+			enemy.deactivate();
+		}
 			
-		for ( const event in this.collisionWatch ) {
+		for ( const event of this.collisionWatch ) {
 			event.unsubscribe();
 		}
 			
-		for ( const event in this.enemyMovementWatch ) {
+		for ( const event of this.enemyMovementWatch ) {
 			event.unsubscribe();
 		}
 
@@ -239,6 +272,20 @@ export const GameState = class {
 
 	lose() {
 		Diagnostics.log('Game over');
+
+		this.end();
+
+		return this;
+	}
+
+	monitorPlayerLife() {
+		(async () => {
+			this.player.onDeath(() => {
+				Diagnostics.log('player is dead');
+
+				this.lose();
+			});
+		})();
 
 		return this;
 	}
@@ -255,7 +302,16 @@ export const GameState = class {
 
 	generateEnemy() {
 		(async () => {
-			if ( this.enemies.length >= 3 ) return;
+			if ( this.enemies.length >= 3 ) {
+				for ( const enemy of this.enemies ) {
+					if ( enemy.isActive() ) continue;
+
+					enemy.activate();
+					return;
+				}
+
+				return;
+			}
 
 			let rand = Math.floor(Math.random() * (99 - 1)) + 1;
 
@@ -273,7 +329,9 @@ export const GameState = class {
 	    this.enemyCanvas.addChild(enemySprite);
 
 			this.monitorCollision(enemy, this.player, () => {
-				Diagnostics.log('collision detected') 
+				Diagnostics.log('collision detected');
+
+				this.player.damage();
 			});
 
 			enemy.getBounds2d().y.ge(400).onOn().subscribe(() => {
