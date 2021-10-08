@@ -15,10 +15,19 @@ Diagnostics.log('script loaded');
 
   const Game = new GameInterface(face, playerSprite, enemyCanvas, gameStateText);
 
-  Game.start();
 
   TouchGestures.onTap().subscribe(() => {
     switch ( Game.state ) {
+      case 'idle': {
+        Game.start();
+        break;
+      }
+
+      case 'over': {
+        Game.start();
+        break;
+      }
+
       case 'started': {
         Game.pause();
         break;
