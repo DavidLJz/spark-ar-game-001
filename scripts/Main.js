@@ -1,4 +1,6 @@
-import { TouchGestures, Diagnostics, Scene, FaceTracking, GameState } from './Interfaces.js'
+import { 
+  TouchGestures, Diagnostics, Scene, FaceTracking, GameInterface 
+} from './Interfaces.js'
 
 Diagnostics.log('script loaded');
 
@@ -11,7 +13,7 @@ Diagnostics.log('script loaded');
     Scene.root.findFirst('2dText0'),
   ]);
 
-  const Game = new GameState(face, playerSprite, enemyCanvas, gameStateText);
+  const Game = new GameInterface(face, playerSprite, enemyCanvas, gameStateText);
 
   Game.start();
 

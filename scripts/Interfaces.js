@@ -249,7 +249,7 @@ const CollisionDetector = {
 	}
 };
 
-export const GameState = class {
+export const GameInterface = class {
 	constructor(face, playerSprite, enemyCanvas, gameStateText) {
 		this.face = face;
 		this.player = new PlayerInterface(playerSprite);
