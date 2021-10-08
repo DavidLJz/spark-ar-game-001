@@ -249,7 +249,7 @@ const CollisionDetector = {
 };
 
 export const GameState = class {
-	constructor(face, playerSprite, enemyCanvas) {
+	constructor(face, playerSprite, enemyCanvas, gameStateText) {
 		this.face = face;
 		this.player = new PlayerInterface(playerSprite);
 
@@ -259,6 +259,9 @@ export const GameState = class {
 	  this.faceTracking = null;
 	  this.collisionWatch = [];
 	  this.enemyMovementWatch = [];
+
+	  this.gameStateText = gameStateText;
+	  this.gameStateText.hidden = true;
 
 		this.state = 'idle'; // paused, over, started
 	}

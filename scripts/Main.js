@@ -4,13 +4,14 @@ Diagnostics.log('script loaded');
 
 (async function () {
 
-  const [face, playerSprite, enemyCanvas] = await Promise.all([
+  const [face, playerSprite, enemyCanvas, gameStateText] = await Promise.all([
     FaceTracking.face(0),
     Scene.root.findFirst('rectangle0'),
     Scene.root.findFirst('canvas1'),
+    Scene.root.findFirst('2dText0'),
   ]);
 
-  const Game = new GameState(face, playerSprite, enemyCanvas);
+  const Game = new GameState(face, playerSprite, enemyCanvas, gameStateText);
 
   Game.start();
 
