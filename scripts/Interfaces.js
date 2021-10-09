@@ -254,13 +254,13 @@ const CollisionDetector = {
 
 export const GameInterface = class {
 	constructor(
-		face, playerSprite, enemyCanvas, gameStateText, playerStateText, timeText
+		face, playerSprite, canvas, gameStateText, playerStateText, timeText
 	) {
 		this.face = face;
 		this.player = new PlayerInterface(playerSprite);
 
 		this.enemies = [];
-		this.enemyCanvas = enemyCanvas;
+		this.canvas = canvas;
 
 	  this.faceTracking = null;
 	  this.collisionWatch = [];
@@ -450,8 +450,8 @@ export const GameInterface = class {
 
 			const enemySprite = await Scene.create("PlanarImage", {
 	      "name": `enemy-` + rand,
-	      "width": 10000 * 20,
-	      "height": 10000 * 20,
+	      "width": 10000 * 15,
+	      "height": 10000 * 15,
 	      "hidden": false,
 	      'material' : 'material1'
 	    });
@@ -459,7 +459,7 @@ export const GameInterface = class {
 	    const enemy = new EnemyInterface(enemySprite);
 
 	    this.enemies.push(enemy);
-	    this.enemyCanvas.addChild(enemySprite);
+	    this.canvas.addChild(enemySprite);
 
 			this.monitorCollision(enemy, this.player, () => {
 				Diagnostics.log('collision detected');
