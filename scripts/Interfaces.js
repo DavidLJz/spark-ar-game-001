@@ -270,7 +270,8 @@ export const GameInterface = class {
 	  this.collisionWatch = [];
 	  this.enemyMovementWatch = [];
 
-	  this.gameTime = '';
+	  this.gameTime = Reactive.val(0);
+	  this.gameTimeWatch = null;
 
 	  this.timeText = timeText;
 	  this.timeText.hidden = true;
@@ -288,9 +289,9 @@ export const GameInterface = class {
 		(async () => {
 			this.state = 'started';
 
-			this.monitorPlayerLife().enablePlayerMovement().setEnemySpawner();
-
 		  this.logGameTime();
+
+			this.monitorPlayerLife().enablePlayerMovement().setEnemySpawner();
 		})();
 
 		return this;
@@ -323,6 +324,9 @@ export const GameInterface = class {
 
 		  this.timeText.hidden = true;
 		  this.timeText.text = '';
+
+		  this.gameTime = Reactive.val(0);
+		  Time.clearInterval(this.gameTimeWatch);
 		})();
 
 		return this;
@@ -355,6 +359,8 @@ export const GameInterface = class {
 				enemy.unfreeze();
 			}
 		}
+
+		this.logGameTime(true);
 	}
 
 	pause() {
@@ -372,29 +378,36 @@ export const GameInterface = class {
 			}
 		}
 
+		Time.clearInterval(this.gameTimeWatch);
+
 		return this;
 	}
 
-	logGameTime() {
+	logGameTime(resume=false) {
 		this.timeText.hidden = false;
 
-		Time.setInterval(async time => {
+		this.gameTimeWatch = Time.setInterval(async time => {
+			// seconds since setInterval first started
 			const t = Reactive.div( time, Reactive.val(1000) ).round();
-			const m = t.div(60);
-			const s = t.mod(60);
+			
+			// if resume add to gameTime value, else set
+			this.gameTime = resume ? this.gameTime.add(t) : t;
 
-			this.gameTime = m.ge(1).ifThenElse(
-				m.round().toString().concat('m').concat(
+			const m = this.gameTime.div(60);
+			const s = this.gameTime.mod(60);
+
+			this.timeText.text = m.ge(1).ifThenElse(
+				// 1m 30s
+				m.round().toString().concat('m ').concat(
 					s.ge(1).ifThenElse(
 						s.round().toString().concat('s'), ''
 					)
 				),
 
-				t.toString().concat('s')
+				// 30s
+				this.gameTime.toString().concat('s')
 			);
 		}, 1000);
-
-		this.timeText.text = this.gameTime;
 	}
 
 	monitorPlayerLife() {
