@@ -1,6 +1,8 @@
 import { 
-  TouchGestures, Diagnostics, Scene, FaceTracking, GameInterface 
-} from './Interfaces.js'
+  Reactive, TouchGestures, Diagnostics, Scene, FaceTracking 
+} from './Modules.js';
+
+import { GameInterface } from './Interfaces.js';
 
 Diagnostics.log('script loaded');
 

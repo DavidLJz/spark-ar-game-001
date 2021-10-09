@@ -1,10 +1,6 @@
-export const Diagnostics = require('Diagnostics');
-export const FaceTracking = require('FaceTracking');
-export const Scene = require('Scene');
-export const TouchGestures = require('TouchGestures');
-const Reactive = require('Reactive');
-const Time = require('Time');
-const Animation = require('Animation');
+import {
+	Diagnostics, FaceTracking, Scene, Reactive, Time, Animation
+} from './Modules.js';
 
 const PlayerInterface = class {
 	constructor (sprite) {
