@@ -110,12 +110,12 @@ const EnemyInterface = class {
 
 	activate(x=null) {
 		this.active = true;
-		this.restartMovement(x);
+		this.startMovement(x);
 
 		return this;
 	}
 
-	restartMovement(x=null) {
+	startMovement(x=null) {
 		this.sprite.hidden = Reactive.val(true);;
 
 		this.timeDriver = null;
