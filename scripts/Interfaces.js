@@ -285,33 +285,45 @@ export const GameInterface = class {
 	}
 
 	start() {
-		this.state = 'started';
-		this.gameStateText.hidden = true;
-		this.monitorPlayerLife().enablePlayerMovement().setEnemySpawner();
+		(async () => {
+			this.state = 'started';
+
+			this.monitorPlayerLife().enablePlayerMovement().setEnemySpawner();
+
+		  this.logGameTime();
+		})();
 
 		return this;
 	}
 
 	end() {
-		this.faceTracking.unsubscribe();
+		(async () => {
+			this.state = 'over';
 
-		for ( const enemy of this.enemies ) {
-			enemy.deactivate();
-		}
-			
-		for ( const event of this.collisionWatch ) {
-			event.unsubscribe();
-		}
-			
-		for ( const event of this.enemyMovementWatch ) {
-			event.unsubscribe();
-		}
+			this.faceTracking.unsubscribe();
 
-		this.enemies = [];
-		this.collisionWatch = [];
-		this.enemyMovementWatch = [];
+			for ( const enemy of this.enemies ) {
+				enemy.deactivate();
+			}
+				
+			for ( const event of this.collisionWatch ) {
+				event.unsubscribe();
+			}
+				
+			for ( const event of this.enemyMovementWatch ) {
+				event.unsubscribe();
+			}
 
-		this.state = 'over';
+			this.enemies = [];
+			this.collisionWatch = [];
+			this.enemyMovementWatch = [];
+
+		  this.gameStateText.hidden = true;
+		  this.gameStateText.text = '';
+
+		  this.timeText.hidden = true;
+		  this.timeText.text = '';
+		})();
 
 		return this;
 	}
@@ -361,6 +373,28 @@ export const GameInterface = class {
 		}
 
 		return this;
+	}
+
+	logGameTime() {
+		this.timeText.hidden = false;
+
+		Time.setInterval(async time => {
+			const t = Reactive.div( time, Reactive.val(1000) ).round();
+			const m = t.div(60);
+			const s = t.mod(60);
+
+			this.gameTime = m.ge(1).ifThenElse(
+				m.round().toString().concat('m').concat(
+					s.ge(1).ifThenElse(
+						s.round().toString().concat('s'), ''
+					)
+				),
+
+				t.toString().concat('s')
+			);
+		}, 1000);
+
+		this.timeText.text = this.gameTime;
 	}
 
 	monitorPlayerLife() {
