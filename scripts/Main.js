@@ -9,9 +9,19 @@ Diagnostics.log('script loaded');
 (async function () {
 
   const [
-    face, worldCanvas, gameStateText, playerStateText, timeText
+    face, 
+    playerSpriteMaterial, 
+    meteorGreyBig1, 
+    meteorGreyBig2, 
+    worldCanvas, 
+    gameStateText, 
+    playerStateText,
+    timeText
   ] = await Promise.all([
     FaceTracking.face(0),
+    Materials.findFirst('playerSpriteMaterial'),
+    Materials.findFirst('meteorGreyBig1'),
+    Materials.findFirst('meteorGreyBig2'),
     Scene.root.findFirst('worldCanvas'),
     Scene.root.findFirst('gameStateText'),
     Scene.root.findFirst('playerStateText'),
@@ -23,13 +33,18 @@ Diagnostics.log('script loaded');
       hidden : false,
       width : 10000 * 15,
       height : 10000 * 15,
-      material : 'material1'
+      material : playerSpriteMaterial
   });
 
   worldCanvas.addChild(playerSprite);
 
+  const entityMaterials = {
+    meteors : [ meteorGreyBig1, meteorGreyBig2 ]
+  };
+
   const Game = new GameInterface(
-    face, playerSprite, worldCanvas, gameStateText, playerStateText, timeText
+    face, playerSprite, entityMaterials, 
+    worldCanvas, gameStateText, playerStateText, timeText
   );
 
   TouchGestures.onTap().subscribe(() => {

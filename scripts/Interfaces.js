@@ -254,10 +254,13 @@ const CollisionDetector = {
 
 export const GameInterface = class {
 	constructor(
-		face, playerSprite, canvas, gameStateText, playerStateText, timeText
+		face, playerSprite, entityMaterials,  
+		canvas, gameStateText, playerStateText, timeText
 	) {
 		this.face = face;
 		this.player = new PlayerInterface(playerSprite);
+
+		this.entityMaterials = entityMaterials;
 
 		this.enemies = [];
 		this.canvas = canvas;
