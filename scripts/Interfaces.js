@@ -30,6 +30,13 @@ const PlayerInterface = class {
 		return this;
 	}
 
+	activate() {
+		this.lifes = 3;
+		this.sprite.transform.y = Reactive.val(400).add(this.sprite.bounds.height);
+
+		return this;
+	}
+
 	onDeath(callback) {
 		if ( typeof callback !== 'function' ) {
 			throw new Error('must be a function');
@@ -405,6 +412,8 @@ export const GameInterface = class {
 	}
 
 	enablePlayerMovement() {
+		this.player.activate();
+
 		const faceTurning = this.face.cameraTransform.rotationY;		  
 
 		this.faceTracking = faceTurning.monitor().subscribeWithSnapshot(
