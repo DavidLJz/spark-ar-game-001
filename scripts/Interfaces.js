@@ -449,14 +449,18 @@ export const GameInterface = class {
 				return;
 			}
 
-			let rand = Math.floor(Math.random() * (99 - 1)) + 1;
+			let rand = Math.floor(Math.random() * (20 - 13)) + 13;
+
+			const material = this.entityMaterials.meteors[
+				(Math.random() * this.entityMaterials.meteors.length) | 0
+			];
 
 			const enemySprite = await Scene.create("PlanarImage", {
-	      "name": `enemy-` + rand,
-	      "width": 10000 * 15,
-	      "height": 10000 * 15,
+	      "name": `enemy-` + this.enemies.length,
+	      "width": 10000 * rand,
+	      "height": 10000 * rand,
 	      "hidden": false,
-	      'material' : 'material1'
+	      'material' : material
 	    });
 
 	    const enemy = new EnemyInterface(enemySprite);
