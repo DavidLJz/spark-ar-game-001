@@ -1,5 +1,5 @@
 import { 
-  Reactive, TouchGestures, Diagnostics, Scene, FaceTracking 
+  Reactive, Materials, TouchGestures, Diagnostics, Scene, FaceTracking 
 } from './Modules.js';
 
 import { GameInterface } from './Interfaces.js';
