@@ -116,7 +116,7 @@ const EnemyInterface = class {
 	}
 
 	restartMovement(x=null) {
-		this.sprite.hidden = true;
+		this.sprite.hidden = Reactive.val(true);;
 
 		this.timeDriver = null;
 
@@ -128,7 +128,7 @@ const EnemyInterface = class {
 
 		this.sprite.transform.x = Reactive.val(x);
 
-		this.sprite.hidden = false;
+		this.sprite.hidden = Reactive.val(false);
 
 		this.beginMovement();
 
@@ -157,7 +157,7 @@ const EnemyInterface = class {
 
 	deactivate() {
 		this.active = false;
-		this.sprite.hidden = true;
+		this.sprite.hidden = Reactive.val(true);;
 
 		this.sprite.transform.y = Reactive.val(-20).sub(this.sprite.bounds.height);
 
@@ -273,13 +273,13 @@ export const GameInterface = class {
 	  this.gameTimeWatch = null;
 
 	  this.timeText = timeText;
-	  this.timeText.hidden = true;
+	  this.timeText.hidden = Reactive.val(true);;
 
 	  this.gameStateText = gameStateText;
-	  this.gameStateText.hidden = true;
+	  this.gameStateText.hidden = Reactive.val(true);;
 
 	  this.playerStateText = playerStateText;
-	  this.playerStateText.hidden = true;
+	  this.playerStateText.hidden = Reactive.val(true);;
 
 		this.state = 'idle'; // paused, over, started
 	}
@@ -287,6 +287,14 @@ export const GameInterface = class {
 	start() {
 		(async () => {
 			this.state = 'started';
+
+		  this.gameStateText.hidden = Reactive.val(true);;
+		  this.gameStateText.text = '';
+
+		  this.timeText.hidden = Reactive.val(true);;
+		  this.timeText.text = '';
+
+		  this.gameTime = Reactive.val(0);
 
 		  this.logGameTime();
 
@@ -318,13 +326,6 @@ export const GameInterface = class {
 			this.collisionWatch = [];
 			this.enemyMovementWatch = [];
 
-		  this.gameStateText.hidden = true;
-		  this.gameStateText.text = '';
-
-		  this.timeText.hidden = true;
-		  this.timeText.text = '';
-
-		  this.gameTime = Reactive.val(0);
 		  Time.clearInterval(this.gameTimeWatch);
 		})();
 
@@ -335,9 +336,9 @@ export const GameInterface = class {
 		Diagnostics.log('Game over');
 
 		this.gameStateText.text = 'GAME OVER';
-		this.gameStateText.hidden = false;
+		this.gameStateText.hidden = Reactive.val(false);
 
-	  this.playerStateText.hidden = true;
+	  this.playerStateText.hidden = Reactive.val(true);;
 	  this.playerStateText.text = '';
 
 		this.end();
@@ -349,7 +350,7 @@ export const GameInterface = class {
 		this.state = 'started';
 		this.enablePlayerMovement();
 
-		this.gameStateText.hidden = true;
+		this.gameStateText.hidden = Reactive.val(true);;
 
 		if ( this.enemies.length > 0 ) {
 			for ( const enemy of this.enemies ) {
@@ -367,7 +368,7 @@ export const GameInterface = class {
 		this.disablePlayerMovement();
 
 		this.gameStateText.text = 'PAUSED';
-		this.gameStateText.hidden = false;
+		this.gameStateText.hidden = Reactive.val(false);
 
 		if ( this.enemies.length > 0 ) {
 			for ( const enemy of this.enemies ) {
@@ -383,7 +384,7 @@ export const GameInterface = class {
 	}
 
 	logGameTime(resume=false) {
-		this.timeText.hidden = false;
+		this.timeText.hidden = Reactive.val(false);
 
 		this.gameTimeWatch = Time.setInterval(async time => {
 			// seconds since setInterval first started
@@ -414,7 +415,7 @@ export const GameInterface = class {
 			this.player.activate();
 	  
 	  	this.playerStateText.text = 'LIFES: ' + this.player.lifes;
-	  	this.playerStateText.hidden = false;
+	  	this.playerStateText.hidden = Reactive.val(false);
 
 			this.player.onDeath(() => {
 				Diagnostics.log('player is dead');
