@@ -296,6 +296,7 @@ export const GameInterface = class {
 			event.unsubscribe();
 		}
 
+		this.enemies = [];
 		this.collisionWatch = [];
 		this.enemyMovementWatch = [];
 
@@ -402,7 +403,9 @@ export const GameInterface = class {
 			});
 
 			enemy.getBounds2d().y.ge(400).onOn().subscribe(() => {
-				this.generateEnemy();
+				if ( this.state == 'started' && this.enemies.length < 3 ) {	
+					this.generateEnemy();
+				}
 			});
 
 	    enemy.activate();
@@ -449,9 +452,9 @@ export const GameInterface = class {
 				entityA.getBounds2d(), entityB.getBounds2d()
 			);
 
-			const collisionSignal = col.onOn().subscribe(onCollision);
-
-			this.collisionWatch.push(collisionSignal);
+			this.collisionWatch.push(
+				col.onOn().subscribe(onCollision)
+			);
 		})();
 
 		return this;
