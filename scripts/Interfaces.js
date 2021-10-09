@@ -257,7 +257,7 @@ const CollisionDetector = {
 };
 
 export const GameInterface = class {
-	constructor(face, playerSprite, enemyCanvas, gameStateText) {
+	constructor(face, playerSprite, enemyCanvas, gameStateText, playerStateText) {
 		this.face = face;
 		this.player = new PlayerInterface(playerSprite);
 
@@ -271,12 +271,16 @@ export const GameInterface = class {
 	  this.gameStateText = gameStateText;
 	  this.gameStateText.hidden = true;
 
+	  this.playerStateText = playerStateText;
+	  this.playerStateText.hidden = true;
+
 		this.state = 'idle'; // paused, over, started
 	}
 
 	start() {
 		this.state = 'started';
-		this.setEnemySpawner().enablePlayerMovement().monitorPlayerLife();
+		this.gameStateText.hidden = true;
+		this.monitorPlayerLife().enablePlayerMovement().setEnemySpawner();
 
 		return this;
 	}
@@ -307,6 +311,12 @@ export const GameInterface = class {
 
 	lose() {
 		Diagnostics.log('Game over');
+
+		this.gameStateText.text = 'GAME OVER';
+		this.gameStateText.hidden = false;
+
+	  this.playerStateText.hidden = true;
+	  this.playerStateText.text = '';
 
 		this.end();
 
@@ -348,6 +358,11 @@ export const GameInterface = class {
 
 	monitorPlayerLife() {
 		(async () => {
+			this.player.activate();
+	  
+	  	this.playerStateText.text = 'LIFES: ' + this.player.lifes;
+	  	this.playerStateText.hidden = false;
+
 			this.player.onDeath(() => {
 				Diagnostics.log('player is dead');
 
@@ -400,6 +415,7 @@ export const GameInterface = class {
 				Diagnostics.log('collision detected');
 
 				this.player.damage();
+				this.playerStateText.text = 'LIFES: ' + this.player.lifes;
 			});
 
 			enemy.getBounds2d().y.ge(400).onOn().subscribe(() => {
@@ -415,8 +431,6 @@ export const GameInterface = class {
 	}
 
 	enablePlayerMovement() {
-		this.player.activate();
-
 		const faceTurning = this.face.cameraTransform.rotationY;		  
 
 		this.faceTracking = faceTurning.monitor().subscribeWithSnapshot(

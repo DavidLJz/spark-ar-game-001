@@ -6,15 +6,19 @@ Diagnostics.log('script loaded');
 
 (async function () {
 
-  const [face, playerSprite, enemyCanvas, gameStateText] = await Promise.all([
+  const [
+    face, playerSprite, enemyCanvas, gameStateText, playerStateText
+  ] = await Promise.all([
     FaceTracking.face(0),
     Scene.root.findFirst('rectangle0'),
     Scene.root.findFirst('canvas1'),
     Scene.root.findFirst('2dText0'),
+    Scene.root.findFirst('2dText1'),
   ]);
 
-  const Game = new GameInterface(face, playerSprite, enemyCanvas, gameStateText);
-
+  const Game = new GameInterface(
+    face, playerSprite, enemyCanvas, gameStateText, playerStateText
+  );
 
   TouchGestures.onTap().subscribe(() => {
     switch ( Game.state ) {
