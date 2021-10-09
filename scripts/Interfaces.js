@@ -257,7 +257,9 @@ const CollisionDetector = {
 };
 
 export const GameInterface = class {
-	constructor(face, playerSprite, enemyCanvas, gameStateText, playerStateText) {
+	constructor(
+		face, playerSprite, enemyCanvas, gameStateText, playerStateText, timeText
+	) {
 		this.face = face;
 		this.player = new PlayerInterface(playerSprite);
 
@@ -267,6 +269,11 @@ export const GameInterface = class {
 	  this.faceTracking = null;
 	  this.collisionWatch = [];
 	  this.enemyMovementWatch = [];
+
+	  this.gameTime = '';
+
+	  this.timeText = timeText;
+	  this.timeText.hidden = true;
 
 	  this.gameStateText = gameStateText;
 	  this.gameStateText.hidden = true;
