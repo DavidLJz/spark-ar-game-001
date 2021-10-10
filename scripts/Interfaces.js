@@ -3,13 +3,20 @@ import {
 } from './Modules.js';
 
 const PlayerInterface = class {
-	constructor (sprite) {
+	constructor (sprite, deviceWidth, deviceHeight) {
 		this.sprite = sprite;
 		this.subscriptions = {};
 		this.lifes = 3;
 		this.onDeathCallback = null;
 
-		this.sprite.transform.y = Reactive.val(400).add(this.sprite.bounds.height);
+		this.deviceWidth = deviceWidth;
+		this.deviceHeight = deviceHeight;
+
+		this.sprite.transform.y = deviceHeight.sub(100);
+
+		this.sprite.transform.x = deviceWidth.div(2).sub(
+			this.sprite.bounds.width.div(2)
+		);
 	}
 
 	getBounds2d() {
@@ -28,7 +35,6 @@ const PlayerInterface = class {
 
 	activate() {
 		this.lifes = 3;
-		this.sprite.transform.y = Reactive.val(400).add(this.sprite.bounds.height);
 
 		return this;
 	}
@@ -120,21 +126,11 @@ const EnemyInterface = class {
 	}
 
 	startMovement(x=null) {
-		this.sprite.hidden = Reactive.val(true);;
-
 		this.timeDriver = null;
 
-		this.sprite.transform.y = Reactive.val(-20).sub(this.sprite.bounds.height);
-		
-		if ( !x ) {
-			x = Math.floor(Math.random() * (270 - 1)) + 1;
-		}
-
-		this.sprite.transform.x = Reactive.val(x);
+		this.beginMovement(x);
 
 		this.sprite.hidden = Reactive.val(false);
-
-		this.beginMovement();
 
 		return this;
 	}
@@ -161,9 +157,7 @@ const EnemyInterface = class {
 
 	deactivate() {
 		this.active = false;
-		this.sprite.hidden = Reactive.val(true);;
-
-		this.sprite.transform.y = Reactive.val(-20).sub(this.sprite.bounds.height);
+		this.sprite.hidden = Reactive.val(true);
 
 		return this;
 	}
@@ -195,23 +189,47 @@ const EnemyInterface = class {
 	}
 
 	beginMovement() {
-		this.timeDriver = Animation.timeDriver({
-			durationMilliseconds: 3500,
-		});
+		(async () => {
+			this.timeDriver = Animation.timeDriver({
+				durationMilliseconds: 3500,
+			});
+			
+			const ySampler = Animation.samplers.linear(
+				-100, this.deviceHeight.pinLastValue()
+			);
 
-		const sampler = Animation.samplers.linear(-94, 700);
+			let rand = Reactive.val( Math.random() );
+			const x = this.deviceWidth.sub(20).mul(rand).floor().add(20);
 
-		const animation = Animation.animate(this.timeDriver, sampler);
+			rand = Math.floor(Math.random() * (100 - 10)) + 10;
+			const inLeftHalf = x.lt( this.deviceWidth.div(2) );
 
-		this.sprite.transform.y = animation;
+			const randSum = Reactive.ifThenElse(
+				inLeftHalf, x.add(rand), x.sub(rand)
+			);
 
-		this.timeDriver.start();
+			// ifThenElse takes too long
+			randSum.monitor({fireOnInitialValue:true}).subscribe(
+				(e) => {
+					const xSampler = Animation.samplers.linear(
+						x.pinLastValue(), e.newValue
+					);
 
-		this.timeDriver.onCompleted().subscribe(() => {
-			if ( this.active ) {
-				this.restartMovement();
-			}
-		});
+					this.sprite.transform.x = Animation.animate(this.timeDriver, xSampler);
+				}
+			);
+
+			this.sprite.transform.y = Animation.animate(this.timeDriver, ySampler);
+
+			this.timeDriver.start();
+
+			this.timeDriver.onCompleted().subscribe(() => {
+				if ( this.active ) {
+					this.timeDriver.stop();
+					this.startMovement();
+				}
+			});
+		})();
 
 		return this;
 	}
@@ -258,11 +276,14 @@ const CollisionDetector = {
 
 export const GameInterface = class {
 	constructor(
-		face, playerSprite, entityMaterials,  
+		face, deviceSize, playerSprite, entityMaterials,  
 		canvas, gameStateText, playerStateText, timeText
 	) {
 		this.face = face;
-		this.player = new PlayerInterface(playerSprite);
+
+		this.deviceSize = deviceSize;
+
+		this.player = new PlayerInterface(playerSprite, deviceSize.x, deviceSize.y);
 
 		this.entityMaterials = entityMaterials;
 
@@ -468,7 +489,9 @@ export const GameInterface = class {
 	      'material' : material
 	    });
 
-	    const enemy = new EnemyInterface(enemySprite);
+	    const enemy = new EnemyInterface(
+	    	enemySprite, this.deviceSize.x, this.deviceSize.y
+	    );
 
 	    this.enemies.push(enemy);
 	    this.canvas.addChild(enemySprite);
