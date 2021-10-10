@@ -97,8 +97,12 @@ const PlayerInterface = class {
 };
 
 const EnemyInterface = class {
-	constructor (sprite) {
+	constructor (sprite, deviceWidth, deviceHeight) {
 		this.sprite = sprite;
+
+		this.deviceWidth = deviceWidth;
+		this.deviceHeight = deviceHeight;
+
 		this.subscriptions = {};
 		this.active = false;
 		this.timeDriver = null;
