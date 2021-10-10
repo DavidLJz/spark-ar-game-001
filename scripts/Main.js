@@ -49,6 +49,14 @@ Diagnostics.log('script loaded');
     worldCanvas, gameStateText, playerStateText, timeText
   );
 
+  FaceTracking.count.eq(0).onOn().subscribe(
+    () => {
+      if ( Game.state === 'started' ) {
+        Game.pause();
+      }
+    }
+  );
+
   TouchGestures.onTap().subscribe(() => {
     switch ( Game.state ) {
       case 'idle': {
