@@ -15,17 +15,17 @@ export const EnemyEntity = class {
 		return this.active;
 	}
 
-	activate(x=null) {
+	activate() {
 		this.active = true;
-		this.startMovement(x);
+		this.startMovement();
 
 		return this;
 	}
 
-	startMovement(x=null) {
+	startMovement() {
 		this.timeDriver = null;
 
-		this.beginMovement(x);
+		this.beginMovement();
 
 		this.sprite.hidden = Reactive.val(false);
 
