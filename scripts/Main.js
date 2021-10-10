@@ -11,9 +11,6 @@ Diagnostics.log('script loaded');
   const [
     face, 
     deviceSize,
-    playerSpriteMaterial, 
-    meteorGreyBig1, 
-    meteorGreyBig2, 
     worldCanvas, 
     gameStateText, 
     playerStateText,
@@ -21,13 +18,23 @@ Diagnostics.log('script loaded');
   ] = await Promise.all([
     FaceTracking.face(0),
     Patches.outputs.getPoint2D('deviceSize'),
-    Materials.findFirst('playerSpriteMaterial'),
-    Materials.findFirst('meteorGreyBig1'),
-    Materials.findFirst('meteorGreyBig2'),
     Scene.root.findFirst('worldCanvas'),
     Scene.root.findFirst('gameStateText'),
     Scene.root.findFirst('playerStateText'),
     Scene.root.findFirst('timeText'),
+  ]);
+
+  // materials
+  const [
+    playerSpriteMaterial, 
+    meteorGreyBig1, 
+    meteorGreyBig2, 
+    projectileLaserRed
+  ] = await Promise.all([
+    Materials.findFirst('playerSpriteMaterial'),
+    Materials.findFirst('meteorGreyBig1'),
+    Materials.findFirst('meteorGreyBig2'),
+    Materials.findFirst('projectileLaserRed'),
   ]);
 
   const playerSprite = await Scene.create('PlanarImage', {
@@ -41,7 +48,8 @@ Diagnostics.log('script loaded');
   worldCanvas.addChild(playerSprite);
 
   const entityMaterials = {
-    meteors : [ meteorGreyBig1, meteorGreyBig2 ]
+    meteors : [ meteorGreyBig1, meteorGreyBig2 ],
+    projectiles : { laser : projectileLaserRed }
   };
 
   const Game = new GameInterface(
@@ -70,7 +78,7 @@ Diagnostics.log('script loaded');
       }
 
       case 'started': {
-        Game.pause();
+        Game.shoot();
         break;
       }
     

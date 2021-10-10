@@ -4,6 +4,7 @@ import {
 
 import { PlayerEntity } from './Player.js';
 import { EnemyEntity } from './Enemy.js';
+import { ProjectileEntity } from './Projectile.js';
 
 const cubicMap = (x) => {
   const A = 0.65;
@@ -38,9 +39,9 @@ export const GameInterface = class {
 
 		this.deviceSize = deviceSize;
 
-		this.player = new PlayerEntity(playerSprite, deviceSize.x, deviceSize.y);
-
 		this.entityMaterials = entityMaterials;
+
+		this.player = new PlayerEntity(playerSprite, deviceSize.x, deviceSize.y);
 
 		this.enemies = [];
 		this.canvas = canvas;
@@ -310,6 +311,49 @@ export const GameInterface = class {
 				col.onOn().subscribe(onCollision)
 			);
 		})();
+
+		return this;
+	}
+
+	shoot() {
+		const bounds = this.player.getBounds2d();
+
+		const sub = bounds.x.monitor().subscribeWithSnapshot(
+			{ 'x' : bounds.x, 'y' : bounds.y }, 
+			async (e, snapshot) => {
+				sub.unsubscribe();
+
+				const laserParams = {
+					origin : { 
+						'x' : snapshot.x, 'y' : snapshot.y 
+					},
+
+					destination : {
+						'x' : snapshot.x, 'y' : -10
+					}
+				};
+				
+				let rand = Math.floor(Math.random() * (99 - 1)) + 1;
+
+				const laserSprite = await Scene.create("PlanarImage", {
+		      "name": `laser-` + rand,
+		      "width": 10000 * 8,
+		      "height": 10000 * 8,
+		      "hidden": true,
+		      'material' : this.entityMaterials.projectiles.laser
+		    });
+
+		    this.canvas.addChild(laserSprite);
+
+				const bullet = new ProjectileEntity(
+					laserSprite,
+					this.deviceWidth, this.deviceHeight,
+					laserParams
+				);
+
+				bullet.activate();
+			}
+		);
 
 		return this;
 	}
