@@ -7,7 +7,6 @@ export const EnemyEntity = class {
 		this.deviceWidth = deviceWidth;
 		this.deviceHeight = deviceHeight;
 
-		this.subscriptions = {};
 		this.active = false;
 		this.timeDriver = null;
 	}
@@ -64,28 +63,6 @@ export const EnemyEntity = class {
 		return this.sprite.bounds;
 	}
 
-	getSubscriptions() {
-		return this.subscriptions;
-	}
-
-	unsubscribeTo(boundProperties) {
-		if ( boundProperties && !Array.isArray(boundProperties) ) {
-			throw new Error('must be array');
-		}
-
-		if ( !boundProperties ) {
-			boundProperties = this.subscriptions;
-		}
-
-		for ( const i in boundProperties ) {
-			const sub = this.subscriptions[i] || null;
-
-			if (sub) sub.unsubscribe();
-		}
-
-		return this;
-	}
-
 	beginMovement() {
 		(async () => {
 			this.timeDriver = Animation.timeDriver({
@@ -128,21 +105,6 @@ export const EnemyEntity = class {
 				}
 			});
 		})();
-
-		return this;
-	}
-
-	onChangeVerticalPosition(callback) {
-		if ( !callback || typeof callback !== 'function' ) {
-			throw new Error('must be callback');
-		}
-
-		const bound = this.sprite.bounds.y;
-
-		this.subscriptions['y'] = bound.monitor().subscribeWithSnapshot(
-			{ val : this.sprite.bounds.y },
-			(event, snapshot) => { callback(snapshot.val) }
-		);
 
 		return this;
 	}
