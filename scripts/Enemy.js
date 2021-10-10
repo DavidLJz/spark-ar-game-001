@@ -1,69 +1,13 @@
 import { Reactive, Animation } from './Modules.js';
 
-export const EnemyEntity = class {
+import { BaseEntity } from './BaseEntity.js';
+
+export const EnemyEntity = class extends BaseEntity  {
 	constructor (sprite, deviceWidth, deviceHeight) {
-		this.sprite = sprite;
-
-		this.deviceWidth = deviceWidth;
-		this.deviceHeight = deviceHeight;
-
-		this.active = false;
-		this.timeDriver = null;
-	}
-
-	isActive() {
-		return this.active;
-	}
-
-	activate() {
-		this.active = true;
-		this.startMovement();
-
-		return this;
+		super(sprite, deviceWidth, deviceHeight);
 	}
 
 	startMovement() {
-		this.timeDriver = null;
-
-		this.beginMovement();
-
-		this.sprite.hidden = Reactive.val(false);
-
-		return this;
-	}
-
-	unfreeze() {
-		this.active = true;
-
-		if ( this.timeDriver ) {
-			this.timeDriver.start();
-		}
-
-		return this;
-	}
-
-	freeze() {
-		this.active = false;
-
-		if ( this.timeDriver && this.timeDriver.isRunning() ) {
-			this.timeDriver.stop();
-		}
-
-		return this;
-	}
-
-	deactivate() {
-		this.active = false;
-		this.sprite.hidden = Reactive.val(true);
-
-		return this;
-	}
-
-	getBounds2d() {
-		return this.sprite.bounds;
-	}
-
-	beginMovement() {
 		(async () => {
 			this.timeDriver = Animation.timeDriver({
 				durationMilliseconds: 3500,
