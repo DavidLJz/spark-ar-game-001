@@ -1,4 +1,4 @@
-import { Reactive, Animation } from './Modules.js';
+import { Reactive, Scene, Animation } from './Modules.js';
 
 export const BaseEntity = class {
 	constructor(sprite, deviceWidth, deviceHeight) {
@@ -61,6 +61,11 @@ export const BaseEntity = class {
 		}
 
 		return this;
+	}
+
+	destroy() {
+		this.sprite.removeFromParent();
+		Scene.destroy(this.sprite);
 	}
 
 	getBounds2d() {

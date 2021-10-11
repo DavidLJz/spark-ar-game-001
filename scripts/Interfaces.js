@@ -352,6 +352,10 @@ export const GameInterface = class {
 				);
 
 				bullet.activate();
+
+				bullet.animation.onCompleted().subscribe(
+					() => { bullet.destroy(); }
+				);
 			}
 		);
 
