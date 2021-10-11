@@ -30,6 +30,155 @@ const CollisionDetector = {
 	}
 };
 
+const BaseEntitiesInterface = class {
+	constructor(entities=[]) {
+		this.entities = entities;
+	}
+
+	callbackOnEntities(callback) {
+		if ( typeof callback !== 'function' ) {
+			throw new Error('callback must be a function');
+		}
+
+		for ( let i in this.entities ) {
+			callback(this.entities[i], i);
+		}
+
+		return this;
+	}
+
+	activateAll() {
+		return this.callbackOnEntities((entity, i) => {
+			if ( entity.isActive() ) return;
+
+			entity.activate();
+		});
+	}
+
+	deactivateAll() {
+		return this.callbackOnEntities((entity, i) => {
+			if ( !entity.isActive() ) return;
+
+			entity.deactivate();
+		});
+	}
+
+	freezeAll() {
+		return this.callbackOnEntities((entity, i) => {
+			if ( !entity.isActive() ) return;
+
+			entity.freeze();
+		});
+	}
+
+	unfreezeAll() {
+		return this.callbackOnEntities((entity, i) => {
+			if ( entity.isActive() ) return;
+
+			entity.unfreeze();
+		});
+	}
+}
+
+const 
+
+const ProjectileInterface = class extends BaseEntitiesInterface {
+	constructor(canvas, deviceWidth, deviceHeight, materials) {
+		super();
+
+		this.canvas = canvas;
+		this.deviceWidth = deviceWidth;
+		this.deviceHeight = deviceHeight;
+		this.materials = materials;
+	}
+
+	shoot(shooter, burst, material, accuracy=100) {
+		const bounds = shooter.getBounds2d();
+
+		if ( typeof burst !== 'number' || burst <= 1 || burst >= 5 ) {
+			burst = 1;
+		}
+
+		const sub = bounds.x.monitor().subscribeWithSnapshot(
+			{ 'x' : bounds.x, 'y' : bounds.y }, 
+			(e, snapshot) => {
+				sub.unsubscribe();
+
+				const projParams = {
+					origin : { 
+						'x' : snapshot.x, 'y' : snapshot.y 
+					},
+
+					destination : {
+						'x' : snapshot.x, 'y' : -10
+					},
+
+					accuracy
+				};
+
+				for (let i = 0; i <= burst-1; i++) {
+					if (!i) {
+						this.createProjectile(material, projParams);
+						continue;
+					}
+
+					Time.setTimeout(
+						() => { this.createProjectile(material, projParams); }, 
+						150 * i
+					);
+				}
+			}
+		);
+	}
+
+	shootWhile(condition, shooter, burst, material, accuracy=100) {
+		const shooting = Time.setInterval(
+			() => { this.shoot(shooter, burst, material, accuracy) }, 150
+		);
+
+		condition.onOff({ fireOnInitialValue: true }).subscribe(
+			(e) => { Time.clearInterval(shooting); }
+		);
+
+		return this;
+	}
+
+	shootLaser(shooter, burst=1) {
+		this.shoot(shooter, burst, this.materials.laser, 85);
+
+		return this;
+	}
+
+	async createProjectile(material, params) {
+		let rand = Math.floor(Math.random() * (99 - 1)) + 1;
+
+		const sprite = await Scene.create("PlanarImage", {
+      "name": `projectile-` + rand,
+      "width": 10000 * 8,
+      "height": 10000 * 8,
+      "hidden": true,
+      'material' : material
+    });
+
+    this.canvas.addChild(sprite);
+
+		const projectile = new ProjectileEntity(
+			sprite, this.deviceWidth, this.deviceHeight, params
+		);
+
+		const len = this.entities.push(projectile);
+
+		projectile.activate();
+
+		projectile.animation.onCompleted().subscribe(() => {
+			if ( !projectile.isActive() ) return;
+
+			projectile.destroy();
+			this.entities.splice(len - 1, 1);
+		});
+	}
+};
+
 export const GameInterface = class {
 	constructor(
 		face, deviceSize, playerSprite, entityMaterials,  
@@ -41,11 +190,15 @@ export const GameInterface = class {
 
 		this.entityMaterials = entityMaterials;
 
-		this.player = new PlayerEntity(playerSprite, deviceSize.x, deviceSize.y);
+		this.player = new PlayerEntity(
+			playerSprite, deviceSize.x, deviceSize.y
+		);
 
-		this.entities = { 
-			projectiles : [], items : [], enemies : []
-		};
+		this.projectiles = new ProjectileInterface(
+			canvas, deviceSize.x, deviceSize.y, entityMaterials.projectiles
+		);
+
+		this.entities = { enemies : [] };
 
 		this.canvas = canvas;
 
@@ -99,6 +252,10 @@ export const GameInterface = class {
 					entity.deactivate();
 				}
 			}
+
+			(async () => {
+				this.projectiles.deactivateAll();
+			})();
 				
 			for ( const event of this.collisionWatch ) {
 				event.unsubscribe();
@@ -147,6 +304,10 @@ export const GameInterface = class {
 			})();
 		}
 
+		(async () => {
+			this.projectiles.unfreezeAll();
+		})();
+
 		this.logGameTime(true);
 	}
 
@@ -166,6 +327,10 @@ export const GameInterface = class {
 				}
 			})();
 		}
+
+		(async () => {
+			this.projectiles.freezeAll();
+		})();
 
 		Time.clearInterval(this.gameTimeWatch);
 
@@ -323,87 +488,9 @@ export const GameInterface = class {
 		return this;
 	}
 
-	shootWhile(condition) {
-		const shooting = Time.setInterval(
-			() => { this.shoot() }, 150
-		);
-
-		condition.onOff({ fireOnInitialValue: true }).subscribe(
-			(e) => { Time.clearInterval(shooting); }
-		);
-
-		return this;
-	}
-
 	shoot(burst=1) {
-		const bounds = this.player.getBounds2d();
-
-		if ( typeof burst !== 'number' || burst <= 1 || burst >= 5 ) {
-			burst = 1;
-		}
-
-		const sub = bounds.x.monitor().subscribeWithSnapshot(
-			{ 'x' : bounds.x, 'y' : bounds.y }, 
-			(e, snapshot) => {
-				sub.unsubscribe();
-
-				const laserParams = {
-					origin : { 
-						'x' : snapshot.x, 'y' : snapshot.y 
-					},
-
-					destination : {
-						'x' : snapshot.x, 'y' : -10
-					},
-
-					accuracy : 85
-				};
-
-				const material = this.entityMaterials.projectiles.laser;
-
-				for (let i = 0; i <= burst-1; i++) {
-					if (!i) {
-						this.createProjectile(material, laserParams);
-						continue;
-					}
-
-					Time.setTimeout(
-						() => { this.createProjectile(material, laserParams); }, 
-						150 * i
-					);
-				}
-			}
-		);
+		this.projectiles.shootLaser(this.player, burst);
 
 		return this;
-	}
-
-	async createProjectile(material, params) {
-		let rand = Math.floor(Math.random() * (99 - 1)) + 1;
-
-		const laserSprite = await Scene.create("PlanarImage", {
-      "name": `laser-` + rand,
-      "width": 10000 * 8,
-      "height": 10000 * 8,
-      "hidden": true,
-      'material' : material
-    });
-
-    this.canvas.addChild(laserSprite);
-
-		const bullet = new ProjectileEntity(
-			laserSprite, this.deviceWidth, this.deviceHeight, params
-		);
-
-		const len = this.entities.projectiles.push(bullet);
-
-		bullet.activate();
-
-		bullet.animation.onCompleted().subscribe(() => {
-			if ( !bullet.isActive() ) return;
-
-			bullet.destroy();
-			this.entities.projectiles.splice(len - 1, 1);
-		});
 	}
 };
