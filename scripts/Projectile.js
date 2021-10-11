@@ -36,48 +36,39 @@ export const ProjectileEntity = class extends BaseEntity {
 	}
 
 	startMovement() {
-		(async () => {
-			let offset = 0;
-			let destinationX = this.params.destination.x.pinLastValue();
+		let offset = 0;
+		let destinationX = this.params.destination.x.pinLastValue();
 
-			if ( this.params.accuracy >= 1 && this.params.accuracy < 100 ) { 
-				let rand = Math.random();
-				let min = 50 - (this.params.accuracy / 2);
+		if ( this.params.accuracy >= 1 && this.params.accuracy < 100 ) { 
+			let rand = Math.random();
+			let min = 50 - (this.params.accuracy / 2);
 
-				offset = Math.floor(rand * (50 - min)) + min;
+			offset = Math.floor(rand * (50 - min)) + min;
 
-				if ( rand <= 0.5 ) {
-					destinationX += offset;
-				} else {
-					destinationX -= offset;
-				}
+			if ( rand <= 0.5 ) {
+				destinationX += offset;
+			} else {
+				destinationX -= offset;
 			}
+		}
 
-			this.animation = Animation.timeDriver({
-				durationMilliseconds: this.params.speed,
-			});
-			
-			const ySampler = Animation.samplers.linear(
-				this.params.origin.y.pinLastValue(), 
-				this.params.destination.y.pinLastValue()
-			);
+		this.animation = Animation.timeDriver({
+			durationMilliseconds: this.params.speed,
+		});
+		
+		const ySampler = Animation.samplers.linear(
+			this.params.origin.y.pinLastValue(), 
+			this.params.destination.y.pinLastValue()
+		);
 
-			const xSampler = Animation.samplers.linear(
-				this.params.origin.x.pinLastValue(), destinationX
-			);
+		const xSampler = Animation.samplers.linear(
+			this.params.origin.x.pinLastValue(), destinationX
+		);
 
-			this.sprite.transform.y = Animation.animate(this.animation, ySampler);
-			this.sprite.transform.x = Animation.animate(this.animation, xSampler);
+		this.sprite.transform.y = Animation.animate(this.animation, ySampler);
+		this.sprite.transform.x = Animation.animate(this.animation, xSampler);
 
-			this.animation.start();
-
-			this.animation.onCompleted().subscribe(() => {
-				if ( this.active ) {
-					this.animation.stop();
-				}
-			});
-
-		})();
+		this.animation.start();
 
 		return this;
 	}
