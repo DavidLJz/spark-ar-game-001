@@ -27,6 +27,18 @@ const CollisionDetector = {
 			this.checkCollision(ObjectA.x, ObjectB.x, ObjectA.width, ObjectB.width),
 			this.checkCollision(ObjectA.y, ObjectB.y, ObjectA.height, ObjectB.height),
 		]);
+	},
+
+	monitorCollision(entityA, entityB, onCollision) {
+		if ( typeof onCollision !== 'function' ) {
+			throw new Error('onCollision must be a function');
+		}
+
+    const col = this.checkCollision2d(
+			entityA.getBounds2d(), entityB.getBounds2d()
+		);
+
+		return col.onOn().subscribe(onCollision);
 	}
 };
 
@@ -80,7 +92,88 @@ const BaseEntitiesInterface = class {
 	}
 }
 
-const 
+const EnemyInterface = class extends BaseEntitiesInterface {
+	constructor(canvas, deviceWidth, deviceHeight, materials) {
+		super();
+
+		this.canvas = canvas;
+		this.deviceWidth = deviceWidth;
+		this.deviceHeight = deviceHeight;
+		this.materials = materials;
+	}
+
+	async setEnemySpawner(materials, limit, onCreate=null) {
+		if ( this.entities.length >= limit ) {
+			for ( const enemy of this.entities ) {
+				if ( enemy.isActive() ) continue;
+
+				enemy.activate();
+				return this;
+			}
+
+			return this;
+		}
+
+		if ( onCreate && typeof onCreate !== 'function' ) {
+			throw new Error('invalid arg callback must be function');
+		}
+
+		const enemy = await this.generateEnemy(materials, onCreate);
+
+		const halfTheScreen = enemy.getBounds2d().y.ge(
+			this.deviceHeight.div(2).pinLastValue()
+		);
+
+		const sub = halfTheScreen.onOn().subscribe(() => {
+			if ( this.state == 'started' && this.entities.length < limit ) {	
+				sub.unsubscribe();
+				this.generateEnemy(materials, onCreate);
+			}
+		});
+
+		return this;
+	}
+
+	async generateEnemy(material, onCreate=null) {
+		let randomNumber = Math.random();
+
+		let randSize = (Math.floor(randomNumber * (20 - 13)) + 13) * 10000;
+
+		if ( Array.isArray(material) ) {
+			material = material[ (randomNumber * material.length) | 0 ];
+		}
+
+		const enemySprite = await Scene.create("PlanarImage", {
+      "name": `enemy-` + this.entities.length,
+      "width": randSize,
+      "height": randSize,
+      "hidden": true,
+      'material' : material
+    });
+
+    const enemy = new EnemyEntity(
+    	enemySprite, this.deviceWidth, this.deviceHeight
+    );
+
+    this.entities.push(enemy);
+
+    this.canvas.addChild(enemySprite);
+
+    if ( onCreate && typeof onCreate === 'function' ) {
+    	onCreate(enemy);
+    }
+
+    enemy.activate();
+
+	  return enemy;
+	}
+
+	setMeteorSpawner(onCreate=null) {
+		this.setEnemySpawner(this.materials.meteors, 3, onCreate);
+
+		return this;
+	}
+}
 
 const ProjectileInterface = class extends BaseEntitiesInterface {
 	constructor(canvas, deviceWidth, deviceHeight, materials) {
@@ -198,7 +291,9 @@ export const GameInterface = class {
 			canvas, deviceSize.x, deviceSize.y, entityMaterials.projectiles
 		);
 
-		this.entities = { enemies : [] };
+		this.enemies = new EnemyInterface(
+			canvas, deviceSize.x, deviceSize.y, entityMaterials.enemies
+		);
 
 		this.canvas = canvas;
 
@@ -247,13 +342,8 @@ export const GameInterface = class {
 
 			this.faceTracking.unsubscribe();
 
-			for ( const i in this.entities ) {
-				for ( const entity of this.entities[i] ) {	
-					entity.deactivate();
-				}
-			}
-
 			(async () => {
+				this.enemies.deactivateAll();
 				this.projectiles.deactivateAll();
 			})();
 				
@@ -294,17 +384,8 @@ export const GameInterface = class {
 
 		this.gameStateText.hidden = Reactive.val(true);
 
-		for ( const i in this.entities ) {
-			(async () => {
-				for ( const entity of this.entities[i] ) {	
-					if ( entity.isActive() ) continue;
-
-					entity.unfreeze();
-				}
-			})();
-		}
-
 		(async () => {
+			this.enemies.unfreezeAll();
 			this.projectiles.unfreezeAll();
 		})();
 
@@ -318,17 +399,8 @@ export const GameInterface = class {
 		this.gameStateText.text = 'PAUSED';
 		this.gameStateText.hidden = Reactive.val(false);
 
-		for ( const i in this.entities ) {
-			(async () => {
-				for ( const entity of this.entities[i] ) {	
-					if ( !entity.isActive() ) continue;
-
-					entity.freeze();
-				}
-			})();
-		}
-
 		(async () => {
+			this.enemies.freezeAll();
 			this.projectiles.freezeAll();
 		})();
 
@@ -381,69 +453,6 @@ export const GameInterface = class {
 		return this;
 	}
 
-	setEnemySpawner() {
-		(async () => {
-			this.generateEnemy();
-
-			Diagnostics.log('enemies spawning');
-		})();
-
-		return this;
-	}
-
-	generateEnemy() {
-		(async () => {
-			if ( this.entities.enemies.length >= 3 ) {
-				for ( const enemy of this.entities.enemies ) {
-					if ( enemy.isActive() ) continue;
-
-					enemy.activate();
-					return;
-				}
-
-				return;
-			}
-
-			let rand = Math.floor(Math.random() * (20 - 13)) + 13;
-
-			const material = this.entityMaterials.meteors[
-				(Math.random() * this.entityMaterials.meteors.length) | 0
-			];
-
-			const enemySprite = await Scene.create("PlanarImage", {
-	      "name": `enemy-` + this.entities.enemies.length,
-	      "width": 10000 * rand,
-	      "height": 10000 * rand,
-	      "hidden": false,
-	      'material' : material
-	    });
-
-	    const enemy = new EnemyEntity(
-	    	enemySprite, this.deviceSize.x, this.deviceSize.y
-	    );
-
-	    this.entities.enemies.push(enemy);
-	    this.canvas.addChild(enemySprite);
-
-			this.monitorCollision(enemy, this.player, () => {
-				Diagnostics.log('collision detected');
-
-				this.player.damage();
-				this.playerStateText.text = 'LIFES: ' + this.player.lifes;
-			});
-
-			enemy.getBounds2d().y.ge(400).onOn().subscribe(() => {
-				if ( this.state == 'started' && this.entities.enemies.length < 3 ) {	
-					this.generateEnemy();
-				}
-			});
-
-	    enemy.activate();
-		})();
-
-	  return this;
-	}
-
 	enablePlayerMovement() {
 		const faceTurning = this.face.cameraTransform.rotationY;		  
 
@@ -472,20 +481,17 @@ export const GameInterface = class {
 		return this;
 	}
 
-	monitorCollision(entityA, entityB, onCollision) {
-		(async () => {
-			if ( typeof onCollision !== 'function' ) return;
+	setEnemySpawner() {
+		const collision = enemy => {
+			CollisionDetector.monitorCollision(enemy, this.player, () => {
+				Diagnostics.log('collision detected');
 
-      const col = CollisionDetector.checkCollision2d(
-				entityA.getBounds2d(), entityB.getBounds2d()
-			);
+				this.player.damage();
+				this.playerStateText.text = 'LIFES: ' + this.player.lifes;
+			});
+		};
 
-			this.collisionWatch.push(
-				col.onOn().subscribe(onCollision)
-			);
-		})();
-
-		return this;
+		this.enemies.setMeteorSpawner(collision);
 	}
 
 	shoot(burst=1) {

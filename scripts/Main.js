@@ -48,7 +48,10 @@ Diagnostics.log('script loaded');
   worldCanvas.addChild(playerSprite);
 
   const entityMaterials = {
-    meteors : [ meteorGreyBig1, meteorGreyBig2 ],
+    enemies : { 
+      meteors : [meteorGreyBig1, meteorGreyBig2]
+    },
+    
     projectiles : { laser : projectileLaserRed }
   };
 
