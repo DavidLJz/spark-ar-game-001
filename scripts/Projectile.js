@@ -28,13 +28,31 @@ export const ProjectileEntity = class extends BaseEntity {
 			}
 		}
 
-		const defaultParams = { speed : 1000 };
+		const defaultParams = { 
+			speed : 1000, accuracy : 100
+		};
 
 		this.params = { ...defaultParams, ...params };
 	}
 
 	startMovement() {
 		(async () => {
+			let offset = 0;
+			let destinationX = this.params.destination.x.pinLastValue();
+
+			if ( this.params.accuracy >= 1 && this.params.accuracy < 100 ) { 
+				let rand = Math.random();
+				let min = 50 - (this.params.accuracy / 2);
+
+				offset = Math.floor(rand * (50 - min)) + min;
+
+				if ( rand <= 0.5 ) {
+					destinationX += offset;
+				} else {
+					destinationX -= offset;
+				}
+			}
+
 			this.animation = Animation.timeDriver({
 				durationMilliseconds: this.params.speed,
 			});
@@ -45,8 +63,7 @@ export const ProjectileEntity = class extends BaseEntity {
 			);
 
 			const xSampler = Animation.samplers.linear(
-				this.params.origin.x.pinLastValue(), 
-				this.params.destination.x.pinLastValue()
+				this.params.origin.x.pinLastValue(), destinationX
 			);
 
 			this.sprite.transform.y = Animation.animate(this.animation, ySampler);

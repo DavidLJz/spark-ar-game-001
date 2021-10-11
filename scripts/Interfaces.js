@@ -346,15 +346,23 @@ export const GameInterface = class {
 
 					destination : {
 						'x' : snapshot.x, 'y' : -10
-					}
+					},
+
+					accuracy : 85
 				};
 
 				const material = this.entityMaterials.projectiles.laser;
 
-				for (let i = 1; i <= burst; i++) {
-					Time.setTimeout(() => {
-						this.createProjectile(material, laserParams)
-					}, 150 * i);
+				for (let i = 0; i <= burst-1; i++) {
+					if (!i) {
+						this.createProjectile(material, laserParams);
+						continue;
+					}
+
+					Time.setTimeout(
+						() => { this.createProjectile(material, laserParams); }, 
+						150 * i
+					);
 				}
 			}
 		);
