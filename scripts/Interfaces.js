@@ -44,7 +44,7 @@ export const GameInterface = class {
 		this.player = new PlayerEntity(playerSprite, deviceSize.x, deviceSize.y);
 
 		this.entities = { 
-			enemies : [], projectiles : [], items : []
+			projectiles : [], items : [], enemies : []
 		};
 
 		this.canvas = canvas;
@@ -399,7 +399,9 @@ export const GameInterface = class {
 
 		bullet.activate();
 
-		bullet.animation.onCompleted().subscribe(() => { 
+		bullet.animation.onCompleted().subscribe(() => {
+			if ( !bullet.isActive() ) return;
+
 			bullet.destroy();
 			this.entities.projectiles.splice(len - 1, 1);
 		});
