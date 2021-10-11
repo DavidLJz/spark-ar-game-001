@@ -94,8 +94,8 @@ export const GameInterface = class {
 
 			this.faceTracking.unsubscribe();
 
-			for ( const entityGroup of this.entities ) {
-				for ( const entity of entityGroup ) {	
+			for ( const i in this.entities ) {
+				for ( const entity of this.entities[i] ) {	
 					entity.deactivate();
 				}
 			}
@@ -135,14 +135,16 @@ export const GameInterface = class {
 		this.state = 'started';
 		this.enablePlayerMovement();
 
-		this.gameStateText.hidden = Reactive.val(true);;
+		this.gameStateText.hidden = Reactive.val(true);
 
-		for ( const entityGroup of this.entities ) {
-			for ( const entity of entityGroup ) {	
-				if ( entity.isActive() ) continue;
+		for ( const i in this.entities ) {
+			(async () => {
+				for ( const entity of this.entities[i] ) {	
+					if ( entity.isActive() ) continue;
 
-				entity.unfreeze();
-			}
+					entity.unfreeze();
+				}
+			})();
 		}
 
 		this.logGameTime(true);
@@ -155,12 +157,14 @@ export const GameInterface = class {
 		this.gameStateText.text = 'PAUSED';
 		this.gameStateText.hidden = Reactive.val(false);
 
-		for ( const entityGroup of this.entities ) {
-			for ( const entity of entityGroup ) {	
-				if ( !entity.isActive() ) continue;
+		for ( const i in this.entities ) {
+			(async () => {
+				for ( const entity of this.entities[i] ) {	
+					if ( !entity.isActive() ) continue;
 
-				entity.freeze();
-			}
+					entity.freeze();
+				}
+			})();
 		}
 
 		Time.clearInterval(this.gameTimeWatch);
