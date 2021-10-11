@@ -78,7 +78,7 @@ Diagnostics.log('script loaded');
       }
 
       case 'started': {
-        Game.shoot();
+        Game.shoot(3);
         break;
       }
     

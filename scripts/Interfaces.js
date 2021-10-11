@@ -315,12 +315,28 @@ export const GameInterface = class {
 		return this;
 	}
 
-	shoot() {
+	shootWhile(condition) {
+		const shooting = Time.setInterval(
+			() => { this.shoot() }, 150
+		);
+
+		condition.onOff({ fireOnInitialValue: true }).subscribe(
+			(e) => { Time.clearInterval(shooting); }
+		);
+
+		return this;
+	}
+
+	shoot(burst=1) {
 		const bounds = this.player.getBounds2d();
+
+		if ( typeof burst !== 'number' || burst <= 1 || burst >= 5 ) {
+			burst = 1;
+		}
 
 		const sub = bounds.x.monitor().subscribeWithSnapshot(
 			{ 'x' : bounds.x, 'y' : bounds.y }, 
-			async (e, snapshot) => {
+			(e, snapshot) => {
 				sub.unsubscribe();
 
 				const laserParams = {
@@ -332,33 +348,41 @@ export const GameInterface = class {
 						'x' : snapshot.x, 'y' : -10
 					}
 				};
-				
-				let rand = Math.floor(Math.random() * (99 - 1)) + 1;
 
-				const laserSprite = await Scene.create("PlanarImage", {
-		      "name": `laser-` + rand,
-		      "width": 10000 * 8,
-		      "height": 10000 * 8,
-		      "hidden": true,
-		      'material' : this.entityMaterials.projectiles.laser
-		    });
+				const material = this.entityMaterials.projectiles.laser;
 
-		    this.canvas.addChild(laserSprite);
-
-				const bullet = new ProjectileEntity(
-					laserSprite,
-					this.deviceWidth, this.deviceHeight,
-					laserParams
-				);
-
-				bullet.activate();
-
-				bullet.animation.onCompleted().subscribe(
-					() => { bullet.destroy(); }
-				);
+				for (let i = 1; i <= burst; i++) {
+					Time.setTimeout(() => {
+						this.createProjectile(material, laserParams)
+					}, 150 * i);
+				}
 			}
 		);
 
 		return this;
+	}
+
+	async createProjectile(material, params) {
+		let rand = Math.floor(Math.random() * (99 - 1)) + 1;
+
+		const laserSprite = await Scene.create("PlanarImage", {
+      "name": `laser-` + rand,
+      "width": 10000 * 8,
+      "height": 10000 * 8,
+      "hidden": true,
+      'material' : material
+    });
+
+    this.canvas.addChild(laserSprite);
+
+		const bullet = new ProjectileEntity(
+			laserSprite, this.deviceWidth, this.deviceHeight, params
+		);
+
+		bullet.activate();
+
+		bullet.animation.onCompleted().subscribe(
+			() => { bullet.destroy(); }
+		);
 	}
 };
