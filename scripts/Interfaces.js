@@ -43,7 +43,10 @@ export const GameInterface = class {
 
 		this.player = new PlayerEntity(playerSprite, deviceSize.x, deviceSize.y);
 
-		this.enemies = [];
+		this.entities = { 
+			enemies : [], projectiles : [], items : []
+		};
+
 		this.canvas = canvas;
 
 	  this.faceTracking = null;
@@ -91,8 +94,10 @@ export const GameInterface = class {
 
 			this.faceTracking.unsubscribe();
 
-			for ( const enemy of this.enemies ) {
-				enemy.deactivate();
+			for ( const entityGroup of this.entities ) {
+				for ( const entity of entityGroup ) {	
+					entity.deactivate();
+				}
 			}
 				
 			for ( const event of this.collisionWatch ) {
@@ -103,7 +108,6 @@ export const GameInterface = class {
 				event.unsubscribe();
 			}
 
-			this.enemies = [];
 			this.collisionWatch = [];
 			this.enemyMovementWatch = [];
 
@@ -133,11 +137,11 @@ export const GameInterface = class {
 
 		this.gameStateText.hidden = Reactive.val(true);;
 
-		if ( this.enemies.length > 0 ) {
-			for ( const enemy of this.enemies ) {
-				if ( enemy.isActive() ) continue;
-				
-				enemy.unfreeze();
+		for ( const entityGroup of this.entities ) {
+			for ( const entity of entityGroup ) {	
+				if ( entity.isActive() ) continue;
+
+				entity.unfreeze();
 			}
 		}
 
@@ -151,11 +155,11 @@ export const GameInterface = class {
 		this.gameStateText.text = 'PAUSED';
 		this.gameStateText.hidden = Reactive.val(false);
 
-		if ( this.enemies.length > 0 ) {
-			for ( const enemy of this.enemies ) {
-				if ( !enemy.isActive() ) continue;
-				
-				enemy.freeze();
+		for ( const entityGroup of this.entities ) {
+			for ( const entity of entityGroup ) {	
+				if ( !entity.isActive() ) continue;
+
+				entity.freeze();
 			}
 		}
 
@@ -220,8 +224,8 @@ export const GameInterface = class {
 
 	generateEnemy() {
 		(async () => {
-			if ( this.enemies.length >= 3 ) {
-				for ( const enemy of this.enemies ) {
+			if ( this.entities.enemies.length >= 3 ) {
+				for ( const enemy of this.entities.enemies ) {
 					if ( enemy.isActive() ) continue;
 
 					enemy.activate();
@@ -238,7 +242,7 @@ export const GameInterface = class {
 			];
 
 			const enemySprite = await Scene.create("PlanarImage", {
-	      "name": `enemy-` + this.enemies.length,
+	      "name": `enemy-` + this.entities.enemies.length,
 	      "width": 10000 * rand,
 	      "height": 10000 * rand,
 	      "hidden": false,
@@ -249,7 +253,7 @@ export const GameInterface = class {
 	    	enemySprite, this.deviceSize.x, this.deviceSize.y
 	    );
 
-	    this.enemies.push(enemy);
+	    this.entities.enemies.push(enemy);
 	    this.canvas.addChild(enemySprite);
 
 			this.monitorCollision(enemy, this.player, () => {
@@ -260,7 +264,7 @@ export const GameInterface = class {
 			});
 
 			enemy.getBounds2d().y.ge(400).onOn().subscribe(() => {
-				if ( this.state == 'started' && this.enemies.length < 3 ) {	
+				if ( this.state == 'started' && this.entities.enemies.length < 3 ) {	
 					this.generateEnemy();
 				}
 			});
@@ -387,10 +391,13 @@ export const GameInterface = class {
 			laserSprite, this.deviceWidth, this.deviceHeight, params
 		);
 
+		const len = this.entities.projectiles.push(bullet);
+
 		bullet.activate();
 
-		bullet.animation.onCompleted().subscribe(
-			() => { bullet.destroy(); }
-		);
+		bullet.animation.onCompleted().subscribe(() => { 
+			bullet.destroy();
+			this.entities.projectiles.splice(len - 1, 1);
+		});
 	}
 };
