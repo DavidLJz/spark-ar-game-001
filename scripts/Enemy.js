@@ -9,7 +9,7 @@ export const EnemyEntity = class extends BaseEntity  {
 
 	startMovement() {
 		(async () => {
-			this.timeDriver = Animation.timeDriver({
+			this.animation = Animation.timeDriver({
 				durationMilliseconds: 3500,
 			});
 			
@@ -30,21 +30,23 @@ export const EnemyEntity = class extends BaseEntity  {
 			// ifThenElse takes too long
 			randSum.monitor({fireOnInitialValue:true}).subscribe(
 				(e) => {
+					if ( !this.active ) return;
+
 					const xSampler = Animation.samplers.linear(
 						x.pinLastValue(), e.newValue
 					);
 
-					this.sprite.transform.x = Animation.animate(this.timeDriver, xSampler);
+					this.sprite.transform.x = Animation.animate(this.animation, xSampler);
 				}
 			);
 
-			this.sprite.transform.y = Animation.animate(this.timeDriver, ySampler);
+			this.sprite.transform.y = Animation.animate(this.animation, ySampler);
 
-			this.timeDriver.start();
+			this.animation.start();
 
-			this.timeDriver.onCompleted().subscribe(() => {
+			this.animation.onCompleted().subscribe(() => {
 				if ( this.active ) {
-					this.timeDriver.stop();
+					this.animation.stop();
 					this.startMovement();
 				}
 			});

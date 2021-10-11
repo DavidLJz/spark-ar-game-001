@@ -35,7 +35,7 @@ export const ProjectileEntity = class extends BaseEntity {
 
 	startMovement() {
 		(async () => {
-			this.timeDriver = Animation.timeDriver({
+			this.animation = Animation.timeDriver({
 				durationMilliseconds: this.params.speed,
 			});
 			
@@ -49,15 +49,14 @@ export const ProjectileEntity = class extends BaseEntity {
 				this.params.destination.x.pinLastValue()
 			);
 
-			this.sprite.transform.y = Animation.animate(this.timeDriver, ySampler);
-			this.sprite.transform.x = Animation.animate(this.timeDriver, xSampler);
+			this.sprite.transform.y = Animation.animate(this.animation, ySampler);
+			this.sprite.transform.x = Animation.animate(this.animation, xSampler);
 
-			this.timeDriver.start();
+			this.animation.start();
 
-			this.timeDriver.onCompleted().subscribe(() => {
+			this.animation.onCompleted().subscribe(() => {
 				if ( this.active ) {
-					this.timeDriver.stop();
-					this.deactivate();
+					this.animation.stop();
 				}
 			});
 

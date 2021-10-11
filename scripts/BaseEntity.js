@@ -9,12 +9,12 @@ export const BaseEntity = class {
 
 		this.subscriptions = {};
 		this.active = false;
-		this.timeDriver = null;
+		this.animation = null;
 	}
 
 	activate() {
 		this.active = true;
-		this.timeDriver = null;
+		this.animation = null;
 		
 		if ( 'startMovement' in this )	{
 			this.startMovement();
@@ -28,11 +28,11 @@ export const BaseEntity = class {
 	deactivate() {
 		this.active = false;
 		
-		if ( this.timeDriver && this.timeDriver.isRunning() ) {
-			this.timeDriver.stop();
+		if ( this.animation && this.animation.isRunning() ) {
+			this.animation.stop();
 		}
 		
-		this.timeDriver = null;
+		this.animation = null;
 
 		this.sprite.hidden = Reactive.val(true);
 
@@ -46,8 +46,8 @@ export const BaseEntity = class {
 	unfreeze() {
 		this.active = true;
 
-		if ( this.timeDriver ) {
-			this.timeDriver.start();
+		if ( this.animation ) {
+			this.animation.start();
 		}
 
 		return this;
@@ -56,8 +56,8 @@ export const BaseEntity = class {
 	freeze() {
 		this.active = false;
 
-		if ( this.timeDriver && this.timeDriver.isRunning() ) {
-			this.timeDriver.stop();
+		if ( this.animation && this.animation.isRunning() ) {
+			this.animation.stop();
 		}
 
 		return this;
