@@ -185,7 +185,7 @@ const ProjectileInterface = class extends BaseEntitiesInterface {
 		this.materials = materials;
 	}
 
-	shoot(shooter, burst, material, accuracy=100) {
+	shoot(shooter, material, burst, accuracy=100, rof=150) {
 		const bounds = shooter.getBounds2d();
 
 		if ( typeof burst !== 'number' || burst <= 1 || burst >= 5 ) {
@@ -217,16 +217,16 @@ const ProjectileInterface = class extends BaseEntitiesInterface {
 
 					Time.setTimeout(
 						() => { this.createProjectile(material, projParams); }, 
-						150 * i
+						rof * i
 					);
 				}
 			}
 		);
 	}
 
-	shootWhile(condition, shooter, burst, material, accuracy=100) {
+	shootWhile(condition, shooter, material, accuracy=100, rof=150) {
 		const shooting = Time.setInterval(
-			() => { this.shoot(shooter, burst, material, accuracy) }, 150
+			() => { this.shoot(shooter, 1, material, accuracy) }, rof
 		);
 
 		condition.onOff({ fireOnInitialValue: true }).subscribe(
@@ -237,7 +237,7 @@ const ProjectileInterface = class extends BaseEntitiesInterface {
 	}
 
 	shootLaser(shooter, burst=1) {
-		this.shoot(shooter, burst, this.materials.laser, 85);
+		this.shoot(shooter, this.materials.laser, burst, 85);
 
 		return this;
 	}
