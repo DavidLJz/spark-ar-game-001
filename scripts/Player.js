@@ -15,6 +15,23 @@ export const PlayerEntity = class {
 		);
 	}
 
+	freeze() {
+		this.sprite.transform.y = this.sprite.transform.y.pinLastValue();
+		this.sprite.transform.x = this.sprite.transform.x.pinLastValue();
+
+		return this;
+	}
+
+	resetPosition() {
+		this.sprite.transform.y = this.deviceHeight.sub(100);
+
+		this.sprite.transform.x = this.deviceWidth.div(2).sub(
+			this.sprite.bounds.width.div(2)
+		);
+
+		return this;
+	}
+
 	getBounds2d() {
 		return this.sprite.bounds;
 	}
@@ -24,6 +41,7 @@ export const PlayerEntity = class {
 
 		if ( this.lifes === 0 && this.onDeathCallback ) {
 			this.onDeathCallback();
+			this.resetPosition();
 		}
 
 		return this;
