@@ -389,7 +389,7 @@ export const GameInterface = class {
 			this.projectiles.unfreezeAll();
 		})();
 
-		this.logGameTime(true);
+		this.logGameTime();
 	}
 
 	pause() {
