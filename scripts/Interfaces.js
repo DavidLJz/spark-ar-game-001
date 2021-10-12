@@ -13,6 +13,13 @@ const cubicMap = (x) => {
   return C*x + x*x*x;
 };
 
+const cubicMapSignal = scalarSignal => {
+  const A = 0.65;
+  const C = 1/A - A*A;
+
+  return scalarSignal.mul(C).add(scalarSignal.pow(3));
+};
+
 const CollisionDetector = {
 	checkCollision : function (positionA, positionB, lengthA, lengthB) {
     return Reactive.abs(
@@ -297,7 +304,6 @@ export const GameInterface = class {
 
 		this.canvas = canvas;
 
-	  this.faceTracking = null;
 	  this.collisionWatch = [];
 	  this.enemyMovementWatch = [];
 
@@ -340,8 +346,6 @@ export const GameInterface = class {
 		(async () => {
 			this.state = 'over';
 
-			this.faceTracking.unsubscribe();
-
 			(async () => {
 				this.enemies.deactivateAll();
 				this.projectiles.deactivateAll();
@@ -380,9 +384,10 @@ export const GameInterface = class {
 
 	resume() {
 		this.state = 'started';
-		this.enablePlayerMovement();
 
 		this.gameStateText.hidden = Reactive.val(true);
+
+		this.enablePlayerMovement();
 
 		(async () => {
 			this.enemies.unfreezeAll();
@@ -450,17 +455,11 @@ export const GameInterface = class {
 	}
 
 	enablePlayerMovement() {
-		const faceTurning = this.face.cameraTransform.rotationY;		  
+		const faceTurning = this.face.cameraTransform.rotationY;
 
-		this.faceTracking = faceTurning.monitor().subscribeWithSnapshot(
-	    { faceTurning }, 
-	    (event, snapshot) => {
-	      let turnRadius = cubicMap(snapshot.faceTurning);
-	      let spriteHorizontalPosition = 275 * (1 + turnRadius) / 2;
-	  
-	      this.player.moveHorizontally(spriteHorizontalPosition);
-	    } 
-	  );
+		this.player.moveHorizontally(
+			cubicMapSignal(faceTurning).add(1).mul(this.deviceSize.x).div(2)
+		);
 
 	  Diagnostics.log('enabled player controls');
 
@@ -468,9 +467,7 @@ export const GameInterface = class {
 	}
 
 	disablePlayerMovement() {
-		if ( !this.faceTracking ) return;
-
-		this.faceTracking.unsubscribe();
+		this.player.freeze(); 
 
 		Diagnostics.log('disabled player controls');
 
