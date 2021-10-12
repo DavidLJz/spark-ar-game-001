@@ -409,22 +409,18 @@ export const GameInterface = class {
 		return this;
 	}
 
-	logGameTime(resume=false) {
+	logGameTime() {
 		this.timeText.hidden = Reactive.val(false);
 
-		this.gameTimeWatch = Time.setInterval(async time => {
-			// seconds since setInterval first started
-			const t = Reactive.div( time, Reactive.val(1000) ).round();
-			
-			// if resume add to gameTime value, else set
-			this.gameTime = resume ? this.gameTime.add(t) : t;
+		this.gameTimeWatch = Time.setInterval(async () => {
+			this.gameTime = this.gameTime.add(1);
 
 			const m = this.gameTime.div(60);
 			const s = this.gameTime.mod(60);
 
 			this.timeText.text = m.ge(1).ifThenElse(
 				// 1m 30s
-				m.round().toString().concat('m ').concat(
+				m.floor().toString().concat('m ').concat(
 					s.ge(1).ifThenElse(
 						s.round().toString().concat('s'), ''
 					)
@@ -433,7 +429,7 @@ export const GameInterface = class {
 				// 30s
 				this.gameTime.toString().concat('s')
 			);
-		}, 1000);
+		}, 999);
 	}
 
 	monitorPlayerLife() {
