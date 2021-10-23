@@ -192,11 +192,15 @@ const ProjectileInterface = class extends BaseEntitiesInterface {
 		this.materials = materials;
 	}
 
-	shoot(shooter, material, burst, accuracy=100, rof=150) {
+	shoot(shooter, material, burst, onCreate=null, accuracy=100, rof=150) {
 		const bounds = shooter.getBounds2d();
 
 		if ( typeof burst !== 'number' || burst <= 1 || burst >= 5 ) {
 			burst = 1;
+		}
+
+		if ( onCreate && typeof onCreate !== 'function' ) {
+			throw new Error('invalid arg onCreate must be a function');
 		}
 
 		const sub = bounds.x.monitor().subscribeWithSnapshot(
@@ -218,12 +222,12 @@ const ProjectileInterface = class extends BaseEntitiesInterface {
 
 				for (let i = 0; i <= burst-1; i++) {
 					if (!i) {
-						this.createProjectile(material, projParams);
+						this.createProjectile(material, projParams, onCreate);
 						continue;
 					}
 
 					Time.setTimeout(
-						() => { this.createProjectile(material, projParams); }, 
+						() => { this.createProjectile(material, projParams, onCreate); }, 
 						rof * i
 					);
 				}
@@ -243,13 +247,13 @@ const ProjectileInterface = class extends BaseEntitiesInterface {
 		return this;
 	}
 
-	shootLaser(shooter, burst=1) {
-		this.shoot(shooter, this.materials.laser, burst, 85);
+	shootLaser(shooter, burst=1, onCreate=null) {
+		this.shoot(shooter, this.materials.laser, burst, onCreate, 85);
 
 		return this;
 	}
 
-	async createProjectile(material, params) {
+	async createProjectile(material, params, onCreate=null) {
 		let rand = Math.floor(Math.random() * (99 - 1)) + 1;
 
 		const sprite = await Scene.create("PlanarImage", {
@@ -265,6 +269,10 @@ const ProjectileInterface = class extends BaseEntitiesInterface {
 		const projectile = new ProjectileEntity(
 			sprite, this.deviceWidth, this.deviceHeight, params
 		);
+
+		if ( onCreate && typeof onCreate === 'function' ) {
+			onCreate( projectile );
+		}
 
 		const len = this.entities.push(projectile);
 
@@ -488,7 +496,11 @@ export const GameInterface = class {
 	}
 
 	shoot(burst=1) {
-		this.projectiles.shootLaser(this.player, burst);
+		const onCreateProjectile = (projectile) => {
+			Diagnostics.log('a projectile has been created')
+		};
+
+		this.projectiles.shootLaser(this.player, burst, onCreateProjectile);
 
 		return this;
 	}
