@@ -132,7 +132,7 @@ const EnemyInterface = class extends BaseEntitiesInterface {
 		);
 
 		const sub = halfTheScreen.onOn().subscribe(() => {
-			if ( this.state == 'started' && this.entities.length < limit ) {	
+			if ( enemy.isActive() && this.entities.length < limit ) {	
 				sub.unsubscribe();
 				this.generateEnemy(materials, onCreate);
 			}
