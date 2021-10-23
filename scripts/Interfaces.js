@@ -496,15 +496,18 @@ export const GameInterface = class {
 	}
 
 	shoot(burst=1) {
-		const onCollision = (newVal, oldVal) => {
-			Diagnostics.log('collision with enemy');
-		};
-
 		const onCreateProjectile = (projectile) => {
 			for ( const enemy of this.enemies.entities ) {
 				if ( !enemy.isActive() ) continue;
 
-				CollisionDetector.monitorCollision(projectile, enemy, onCollision);
+				const sub = CollisionDetector.monitorCollision(projectile, enemy, () => {
+					sub.unsubscribe();
+
+					if ( enemy.isActive() ) {
+						Diagnostics.log('enemy has been shot');
+						enemy.deactivate().destroy();
+					}
+				});
 			}			
 		};
 
