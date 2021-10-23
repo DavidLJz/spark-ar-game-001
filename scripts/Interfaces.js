@@ -496,8 +496,16 @@ export const GameInterface = class {
 	}
 
 	shoot(burst=1) {
+		const onCollision = (newVal, oldVal) => {
+			Diagnostics.log('collision with enemy');
+		};
+
 		const onCreateProjectile = (projectile) => {
-			Diagnostics.log('a projectile has been created')
+			for ( const enemy of this.enemies.entities ) {
+				if ( !enemy.isActive() ) continue;
+
+				CollisionDetector.monitorCollision(projectile, enemy, onCollision);
+			}			
 		};
 
 		this.projectiles.shootLaser(this.player, burst, onCreateProjectile);
