@@ -17,6 +17,7 @@ export const BaseEntity = class {
 		this.animation = null;
 		
 		if ( 'startMovement' in this )	{
+			// @ts-ignore
 			this.startMovement();
 		}
 

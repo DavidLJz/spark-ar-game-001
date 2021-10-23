@@ -1,9 +1,20 @@
-export const Diagnostics = require('Diagnostics');
-export const FaceTracking = require('FaceTracking');
-export const Scene = require('Scene');
-export const Materials = require('Materials');
-export const TouchGestures = require('TouchGestures');
-export const Reactive = require('Reactive');
-export const Time = require('Time');
-export const Animation = require('Animation');
-export const Patches = require('Patches');
+// @ts-ignore
+const Diagnostics = require('Diagnostics');
+// @ts-ignore
+const FaceTracking = require('FaceTracking');
+// @ts-ignore
+const Scene = require('Scene');
+// @ts-ignore
+const Materials = require('Materials');
+// @ts-ignore
+const TouchGestures = require('TouchGestures');
+// @ts-ignore
+const Reactive = require('Reactive');
+// @ts-ignore
+const Time = require('Time');
+// @ts-ignore
+const Animation = require('Animation');
+// @ts-ignore
+const Patches = require('Patches');
+
+export { Diagnostics, FaceTracking, Scene, Materials, TouchGestures, Reactive, Time, Animation, Patches };
