@@ -487,8 +487,10 @@ export const GameInterface = class {
 			CollisionDetector.monitorCollision(enemy, this.player, () => {
 				Diagnostics.log('collision detected');
 
-				this.player.damage();
-				this.playerStateText.text = 'LIFES: ' + this.player.lifes;
+				if ( this.state === 'started' ) {
+					this.player.damage();
+					this.playerStateText.text = 'LIFES: ' + this.player.lifes;
+				}
 			});
 		};
 
