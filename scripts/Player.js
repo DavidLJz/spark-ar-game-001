@@ -1,3 +1,5 @@
+import { Diagnostics, Reactive, Time } from "./Modules";
+
 export const PlayerEntity = class {
 	constructor (sprite, deviceWidth, deviceHeight) {
 		this.sprite = sprite;
@@ -113,5 +115,49 @@ export const PlayerEntity = class {
 		);
 
 		return this;
+	}
+
+	changeColor(colorObj={}) {
+		let keycount = 0;
+
+		for ( const key of ['r','g','b'] ) {
+			if ( typeof colorObj[key] === 'number' ) {
+				if ( colorObj[key] > 255 ) {
+					throw new Error(`value ${key} cannot be higher than 255`);
+				}
+
+				if ( colorObj[key] < 0 ) {
+					throw new Error(`value ${key} cannot be lower than 0`);
+				}
+
+				colorObj[key] /= 255;
+
+				keycount++;
+
+			} else {
+				colorObj[key] = 0;
+			}
+		}
+
+		if ( !keycount ) {
+			throw new Error('must pass color object');
+		}
+
+		const rgb_signal = Reactive.RGBA(
+			colorObj.r, colorObj.g, colorObj.b
+		);
+
+		this.sprite.getMaterial().then(async (material) => {
+		});
+
+		return this;
+	}
+
+	colorRed() {
+		return this.changeColor({ r : 255, g : 60, b : 10 });
+	}
+	
+	colorWhite() {
+		return this.changeColor({ r : 255, g : 255, b : 255 });
 	}
 };

@@ -1,4 +1,8 @@
-- [ ] fix shooting while game is paused
+- [ ] fix projectiles not disspearing when game is over
+
+- [ ] add player collision effect
+
+- [ ] add projectile - enemy collision effect
 
 - [x] add enemy - projectile collision
   - [x] add onCreate callback argument to ProjectileInterface::shoot
