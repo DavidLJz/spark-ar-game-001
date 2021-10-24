@@ -225,15 +225,15 @@ export const PlayerEntity = class {
 			this.rotateAnimation(100, 0, -0.2, (animation) => {
 				animation.reverse();
 				animation.stop();
-			})
+			});
 		});
 
 		return this;
 	}
 
 	shrink() {
-		const h = this.sprite.height.sub(20000).pinLastValue();
-		const w = this.sprite.width.sub(20000).pinLastValue();
+		const h = this.sprite.height.sub(25000).pinLastValue();
+		const w = this.sprite.width.sub(25000).pinLastValue();
 
 		this.sizeAnimation(200, h, w, (animation) => {
 			animation.reverse();
