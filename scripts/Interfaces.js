@@ -175,6 +175,11 @@ const EnemyInterface = class extends BaseEntitiesInterface {
 	  return enemy;
 	}
 
+	spawnMeteor(onCreate=null) {
+		this.generateEnemy(this.materials.meteors, onCreate);
+		return this;
+	}
+
 	setMeteorSpawner(onCreate=null) {
 		this.setEnemySpawner(this.materials.meteors, 3, onCreate);
 
