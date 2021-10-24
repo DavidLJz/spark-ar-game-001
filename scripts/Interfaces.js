@@ -107,38 +107,12 @@ const EnemyInterface = class extends BaseEntitiesInterface {
 		this.deviceWidth = deviceWidth;
 		this.deviceHeight = deviceHeight;
 		this.materials = materials;
-	}
 
-	async setEnemySpawner(materials, limit, onCreate=null) {
-		if ( this.entities.length >= limit ) {
-			for ( const enemy of this.entities ) {
-				if ( enemy.isActive() ) continue;
-
-				enemy.activate();
-				return this;
-			}
-
-			return this;
+		this.spawner = {
+			enabled : false,
+			material : this.materials.meteors,
+			subscription : null
 		}
-
-		if ( onCreate && typeof onCreate !== 'function' ) {
-			throw new Error('invalid arg callback must be function');
-		}
-
-		const enemy = await this.generateEnemy(materials, onCreate);
-
-		const halfTheScreen = enemy.getBounds2d().y.ge(
-			this.deviceHeight.div(2).pinLastValue()
-		);
-
-		const sub = halfTheScreen.onOn().subscribe(() => {
-			if ( enemy.isActive() && this.entities.length < limit ) {	
-				sub.unsubscribe();
-				this.generateEnemy(materials, onCreate);
-			}
-		});
-
-		return this;
 	}
 
 	async generateEnemy(material, onCreate=null) {
@@ -175,14 +149,54 @@ const EnemyInterface = class extends BaseEntitiesInterface {
 	  return enemy;
 	}
 
-	spawnMeteor(onCreate=null) {
-		this.generateEnemy(this.materials.meteors, onCreate);
+	enableSpawner(limit=3, interval=1800, onCreate=null) {
+		if ( this.spawner.enabled ) {
+			return this;
+		}	
+
+		if ( onCreate && typeof onCreate !== 'function' ) {
+			throw new Error('invalid arg callback must be function');
+		}
+		
+		this.spawner.enabled = true;
+
+		const spawner = () => {
+			if ( this.entities.length >= limit ) {
+				for ( const enemy of this.entities ) {
+					if ( enemy.isActive() ) continue;
+	
+					enemy.activate();
+					return;
+				}
+	
+				return;
+			}
+
+			this.spawnMeteor(onCreate);
+		};
+
+		spawner();
+
+		this.spawner.subscription = Time.setInterval(() => { spawner(); }, interval);
+
 		return this;
 	}
 
-	setMeteorSpawner(onCreate=null) {
-		this.setEnemySpawner(this.materials.meteors, 3, onCreate);
+	disableSpawner() {
+		if ( !this.spawner.enabled ) {
+			return this;
+		}
 
+		this.spawner.enabled = false;
+
+		this.spawner.subscription.unsubscribe();
+		this.spawner.subscription = null;
+
+		return this;
+	}
+
+	spawnMeteor(onCreate=null) {
+		this.generateEnemy(this.materials.meteors, onCreate);
 		return this;
 	}
 }
@@ -360,7 +374,7 @@ export const GameInterface = class {
 			this.state = 'over';
 
 			(async () => {
-				this.enemies.deactivateAll();
+				this.enemies.disableSpawner().deactivateAll();
 				this.projectiles.deactivateAll();
 			})();
 				
@@ -499,7 +513,7 @@ export const GameInterface = class {
 			});
 		};
 
-		this.enemies.setMeteorSpawner(collision);
+		this.enemies.enableSpawner(3, 1800, collision);
 	}
 
 	shoot(burst=1) {
