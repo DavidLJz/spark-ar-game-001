@@ -41,6 +41,8 @@ export const PlayerEntity = class {
 	damage() {
 		this.lifes--;
 
+		this.shake().shrink();
+
 		if ( this.lifes === 0 && this.onDeathCallback ) {
 			this.onDeathCallback();
 			this.resetPosition();
@@ -184,6 +186,37 @@ export const PlayerEntity = class {
 		});
 	}
 
+	sizeAnimation(duration, height=null, width=null, onComplete=null) {
+		if ( !height && !width ) {
+			throw new Error('Invalid args must state height or width');
+		}
+
+		const animation = Animation.timeDriver({
+			durationMilliseconds: duration,
+		});
+
+		const currentHeight = this.sprite.height;
+		const currentWidth = this.sprite.width;
+
+		const heightSampler = Animation.samplers.linear(
+			currentHeight.pinLastValue(), height
+		);
+
+		const widthSampler = Animation.samplers.linear(
+			currentWidth.pinLastValue(), width
+		);
+
+		this.sprite.height = Animation.animate(animation, heightSampler);
+		this.sprite.width = Animation.animate(animation, widthSampler);
+
+		animation.start();
+
+		const sub_a = animation.onCompleted().subscribe(() => {
+			sub_a.unsubscribe();
+			onComplete(animation);
+		});
+	}
+
 	shake() {
 		this.rotateAnimation(100, 0, 0.2, (animation) => {
 			animation.reverse();
@@ -194,5 +227,19 @@ export const PlayerEntity = class {
 				animation.stop();
 			})
 		});
+
+		return this;
+	}
+
+	shrink() {
+		const h = this.sprite.height.sub(20000).pinLastValue();
+		const w = this.sprite.width.sub(20000).pinLastValue();
+
+		this.sizeAnimation(200, h, w, (animation) => {
+			animation.reverse();
+			animation.stop();
+		});
+
+		return this;
 	}
 };
