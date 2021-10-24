@@ -1,4 +1,4 @@
-import { Diagnostics, Reactive, Time } from "./Modules";
+import { Diagnostics, Reactive, Animation, Time } from "./Modules";
 
 export const PlayerEntity = class {
 	constructor (sprite, deviceWidth, deviceHeight) {
@@ -159,5 +159,40 @@ export const PlayerEntity = class {
 	
 	colorWhite() {
 		return this.changeColor({ r : 255, g : 255, b : 255 });
+	}
+
+	rotateAnimation(duration, begin, end, onComplete=null) {
+		if ( onComplete && typeof onComplete !== 'function' ) {
+			throw new Error('invalid arg typeof onComplete must be function');
+		}
+
+		const animation = Animation.timeDriver({
+			durationMilliseconds: duration,
+		});
+
+		const z_rotation = this.sprite.bounds.rotationZ;
+			
+		const sampler = Animation.samplers.linear(begin, end);
+
+		this.sprite.transform.rotationZ = Animation.animate(animation, sampler);
+
+		animation.start();
+
+		const sub_a = animation.onCompleted().subscribe(() => {
+			sub_a.unsubscribe();
+			onComplete(animation);
+		});
+	}
+
+	shake() {
+		this.rotateAnimation(100, 0, 0.2, (animation) => {
+			animation.reverse();
+			animation.stop();
+
+			this.rotateAnimation(100, 0, -0.2, (animation) => {
+				animation.reverse();
+				animation.stop();
+			})
+		});
 	}
 };
