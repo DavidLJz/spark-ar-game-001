@@ -110,7 +110,8 @@ const EnemyInterface = class extends BaseEntitiesInterface {
 
 		this.spawner = {
 			enabled : false,
-			material : this.materials.meteors,
+			limit : 3,
+			interval : 1800,
 			subscription : null
 		}
 	}
@@ -149,7 +150,7 @@ const EnemyInterface = class extends BaseEntitiesInterface {
 	  return enemy;
 	}
 
-	enableSpawner(limit=3, interval=1800, onCreate=null) {
+	defineSpawner(limit=3, interval=1800, onCreate=null) {
 		if ( this.spawner.enabled ) {
 			return this;
 		}	
@@ -159,9 +160,13 @@ const EnemyInterface = class extends BaseEntitiesInterface {
 		}
 		
 		this.spawner.enabled = true;
+		this.spawner.limit = limit;
+		this.spawner.interval = interval;
 
 		const spawner = () => {
-			if ( this.entities.length >= limit ) {
+			if ( !this.spawner.enabled ) return;
+
+			if ( this.entities.length >= this.spawner.limit ) {
 				for ( const enemy of this.entities ) {
 					if ( enemy.isActive() ) continue;
 	
@@ -177,7 +182,9 @@ const EnemyInterface = class extends BaseEntitiesInterface {
 
 		spawner();
 
-		this.spawner.subscription = Time.setInterval(() => { spawner(); }, interval);
+		this.spawner.subscription = Time.setInterval(
+			() => { spawner(); }, this.spawner.interval
+		);
 
 		return this;
 	}
@@ -191,6 +198,18 @@ const EnemyInterface = class extends BaseEntitiesInterface {
 
 		this.spawner.subscription.unsubscribe();
 		this.spawner.subscription = null;
+
+		return this;
+	}
+
+	suspendSpawner() {
+		this.spawner.enabled = false;
+
+		return this;
+	}
+
+	enableSpawner() {
+		this.spawner.enabled = true;
 
 		return this;
 	}
@@ -412,6 +431,8 @@ export const GameInterface = class {
 	resume() {
 		this.state = 'started';
 
+		this.enemies.enableSpawner();
+
 		this.gameStateText.hidden = Reactive.val(true);
 
 		this.enablePlayerMovement();
@@ -427,6 +448,8 @@ export const GameInterface = class {
 	pause() {
 		this.state = 'paused';
 		this.disablePlayerMovement();
+
+		this.enemies.suspendSpawner();
 
 		this.gameStateText.text = 'PAUSED';
 		this.gameStateText.hidden = Reactive.val(false);
@@ -513,7 +536,7 @@ export const GameInterface = class {
 			});
 		};
 
-		this.enemies.enableSpawner(3, 1800, collision);
+		this.enemies.defineSpawner(3, 1800, collision);
 	}
 
 	shoot(burst=1) {
